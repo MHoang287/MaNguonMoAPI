@@ -1,7 +1,7 @@
 <?php
 /**
  * Model quản lý dữ liệu sản phẩm
- * Bao gồm các chức năng CRUD và tìm kiếm, lọc sản phẩm
+ * Đã được cập nhật để hỗ trợ trường image (hình ảnh)
  */
 class ProductModel
 {
@@ -14,14 +14,14 @@ class ProductModel
     }
 
     /**
-     * Lấy danh sách sản phẩm với các tùy chọn lọc và sắp xếp
-     * @param array $options - Các tùy chọn như search, category_id, price range, sort, limit, offset
-     * @return array - Danh sách sản phẩm
+     * Lấy danh sách sản phẩm với hỗ trợ hình ảnh
+     * @param array $options - Các tùy chọn lọc và sắp xếp
+     * @return array - Danh sách sản phẩm bao gồm thông tin hình ảnh
      */
     public function getProducts($options = [])
     {
-        // Câu truy vấn cơ bản với JOIN để lấy tên danh mục
-        $query = "SELECT p.id, p.name, p.description, p.price, p.category_id, c.name as category_name
+        // Câu truy vấn bao gồm trường image
+        $query = "SELECT p.id, p.name, p.description, p.price, p.category_id, p.image, c.name as category_name
                 FROM " . $this->table_name . " p
                 LEFT JOIN category c ON p.category_id = c.id";
         
@@ -110,8 +110,6 @@ class ProductModel
 
     /**
      * Đếm tổng số sản phẩm thỏa mãn điều kiện lọc
-     * @param array $options - Các tùy chọn lọc tương tự getProducts()
-     * @return int - Tổng số sản phẩm
      */
     public function getTotalProducts($options = [])
     {
@@ -158,13 +156,11 @@ class ProductModel
     }
 
     /**
-     * Lấy danh sách sản phẩm nổi bật (mới nhất)
-     * @param int $limit - Số lượng sản phẩm cần lấy
-     * @return array - Danh sách sản phẩm nổi bật
+     * Lấy danh sách sản phẩm nổi bật (bao gồm hình ảnh)
      */
     public function getFeaturedProducts($limit = 8)
     {
-        $query = "SELECT p.id, p.name, p.description, p.price, c.name as category_name
+        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name
                 FROM " . $this->table_name . " p
                 LEFT JOIN category c ON p.category_id = c.id
                 ORDER BY p.id DESC LIMIT :limit";
@@ -176,14 +172,11 @@ class ProductModel
     }
 
     /**
-     * Lấy sản phẩm theo danh mục
-     * @param int $categoryId - ID danh mục
-     * @param int|null $limit - Giới hạn số lượng (tùy chọn)
-     * @return array - Danh sách sản phẩm trong danh mục
+     * Lấy sản phẩm theo danh mục (bao gồm hình ảnh)
      */
     public function getProductsByCategory($categoryId, $limit = null)
     {
-        $query = "SELECT p.id, p.name, p.description, p.price, c.name as category_name
+        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name
                 FROM " . $this->table_name . " p
                 LEFT JOIN category c ON p.category_id = c.id
                 WHERE p.category_id = :category_id
@@ -205,8 +198,7 @@ class ProductModel
     }
 
     /**
-     * Lấy khoảng giá của tất cả sản phẩm (min-max)
-     * @return object - Đối tượng chứa giá thấp nhất và cao nhất
+     * Lấy khoảng giá của tất cả sản phẩm
      */
     public function getPriceRange()
     {
@@ -217,9 +209,7 @@ class ProductModel
     }
     
     /**
-     * Lấy thông tin chi tiết sản phẩm theo ID
-     * @param int $id - ID sản phẩm
-     * @return object|false - Thông tin sản phẩm hoặc false nếu không tìm thấy
+     * Lấy thông tin chi tiết sản phẩm theo ID (bao gồm hình ảnh)
      */
     public function getProductById($id)
     {
@@ -235,14 +225,15 @@ class ProductModel
     }
 
     /**
-     * Thêm sản phẩm mới
+     * Thêm sản phẩm mới với hỗ trợ hình ảnh
      * @param string $name - Tên sản phẩm
      * @param string $description - Mô tả sản phẩm
      * @param float $price - Giá sản phẩm
      * @param int $category_id - ID danh mục
-     * @return bool|array - true nếu thành công, array lỗi nếu thất bại
+     * @param string $image - Đường dẫn hình ảnh (tùy chọn)
+     * @return bool|array|int - ID sản phẩm mới hoặc array lỗi
      */
-    public function addProduct($name, $description, $price, $category_id)
+    public function addProduct($name, $description, $price, $category_id, $image = null)
     {
         $errors = [];
 
@@ -264,63 +255,77 @@ class ProductModel
             return $errors;
         }
 
-        // Thực hiện insert vào database
-        $query = "INSERT INTO " . $this->table_name . " (name, description, price, category_id) VALUES (:name, :description, :price, :category_id)";
+        // Thực hiện insert vào database (bao gồm trường image)
+        $query = "INSERT INTO " . $this->table_name . " (name, description, price, category_id, image) VALUES (:name, :description, :price, :category_id, :image)";
         $stmt = $this->conn->prepare($query);
         
         // Sanitize dữ liệu để tránh XSS
         $name = htmlspecialchars(strip_tags($name));
         $description = htmlspecialchars(strip_tags($description));
         $price = htmlspecialchars(strip_tags($price));
-        $category_id = htmlspecialchars(strip_tags($category_id));
+        $category_id = $category_id ? htmlspecialchars(strip_tags($category_id)) : null;
+        $image = $image ? htmlspecialchars(strip_tags($image)) : null;
         
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':description', $description);
         $stmt->bindParam(':price', $price);
         $stmt->bindParam(':category_id', $category_id);
+        $stmt->bindParam(':image', $image);
 
         if ($stmt->execute()) {
-            return true;
+            // Trả về ID của sản phẩm vừa tạo
+            return $this->conn->lastInsertId();
         }
         return false;
     }
 
     /**
-     * Cập nhật thông tin sản phẩm
+     * Cập nhật thông tin sản phẩm với hỗ trợ hình ảnh
      * @param int $id - ID sản phẩm
      * @param string $name - Tên sản phẩm mới
      * @param string $description - Mô tả mới
      * @param float $price - Giá mới
      * @param int $category_id - ID danh mục mới
-     * @return bool - true nếu thành công, false nếu thất bại
+     * @param string $image - Đường dẫn hình ảnh mới (tùy chọn)
+     * @return bool - true nếu thành công
      */
-    public function updateProduct($id, $name, $description, $price, $category_id)
+    public function updateProduct($id, $name, $description, $price, $category_id, $image = null)
     {
-        $query = "UPDATE " . $this->table_name . " SET name=:name, description=:description, price=:price, category_id=:category_id WHERE id=:id";
+        // Nếu có hình ảnh mới, cập nhật cả hình ảnh
+        if ($image !== null) {
+            $query = "UPDATE " . $this->table_name . " SET name=:name, description=:description, price=:price, category_id=:category_id, image=:image WHERE id=:id";
+        } else {
+            // Nếu không có hình ảnh mới, không cập nhật trường image
+            $query = "UPDATE " . $this->table_name . " SET name=:name, description=:description, price=:price, category_id=:category_id WHERE id=:id";
+        }
+        
         $stmt = $this->conn->prepare($query);
         
         // Sanitize dữ liệu
         $name = htmlspecialchars(strip_tags($name));
         $description = htmlspecialchars(strip_tags($description));
         $price = htmlspecialchars(strip_tags($price));
-        $category_id = htmlspecialchars(strip_tags($category_id));
+        $category_id = $category_id ? htmlspecialchars(strip_tags($category_id)) : null;
         
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':description', $description);
         $stmt->bindParam(':price', $price);
         $stmt->bindParam(':category_id', $category_id);
-
-        if ($stmt->execute()) {
-            return true;
+        
+        // Bind image parameter nếu có
+        if ($image !== null) {
+            $image = htmlspecialchars(strip_tags($image));
+            $stmt->bindParam(':image', $image);
         }
-            return false;
+
+        return $stmt->execute();
     }
 
     /**
      * Xóa sản phẩm theo ID
      * @param int $id - ID sản phẩm cần xóa
-     * @return bool - true nếu thành công, false nếu thất bại
+     * @return bool - true nếu thành công
      */
     public function deleteProduct($id)
     {
@@ -328,10 +333,45 @@ class ProductModel
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
 
-        if ($stmt->execute()) {
-            return true;
-        }
-        return false;
+        return $stmt->execute();
+    }
+
+    /**
+     * Lấy danh sách sản phẩm có hình ảnh
+     * @param int $limit - Giới hạn số lượng
+     * @return array - Danh sách sản phẩm có hình ảnh
+     */
+    public function getProductsWithImages($limit = 10)
+    {
+        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name
+                FROM " . $this->table_name . " p
+                LEFT JOIN category c ON p.category_id = c.id
+                WHERE p.image IS NOT NULL AND p.image != ''
+                ORDER BY p.id DESC LIMIT :limit";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    /**
+     * Lấy danh sách sản phẩm không có hình ảnh
+     * @param int $limit - Giới hạn số lượng
+     * @return array - Danh sách sản phẩm không có hình ảnh
+     */
+    public function getProductsWithoutImages($limit = 10)
+    {
+        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name
+                FROM " . $this->table_name . " p
+                LEFT JOIN category c ON p.category_id = c.id
+                WHERE p.image IS NULL OR p.image = ''
+                ORDER BY p.id DESC LIMIT :limit";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 }
 ?>
