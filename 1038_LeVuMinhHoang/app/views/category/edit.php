@@ -5,7 +5,7 @@ include_once 'app/views/shares/header.php';
 
 <section class="py-5">
     <div class="container">
-        <!-- Breadcrumb -->
+        <!-- Breadcrumb - Đường dẫn điều hướng -->
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Trang Chủ</a></li>
@@ -16,244 +16,231 @@ include_once 'app/views/shares/header.php';
 
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <!-- Main Form Card -->
-                <div class="card shadow-lg border-0" data-aos="fade-up">
-                    <div class="card-header bg-gradient text-white position-relative" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
-                        <h4 class="card-title mb-0">
-                            <i class="fas fa-edit me-2"></i>Chỉnh Sửa Danh Mục
-                        </h4>
-                        <div class="position-absolute top-0 end-0 m-3">
-                            <span class="badge bg-light text-dark">
-                                ID: <?= $category->id ?>
-                            </span>
-                        </div>
+                <!-- Loading State - Trạng thái đang tải dữ liệu từ API -->
+                <div id="loadingContainer" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
                     </div>
-                    
-                    <div class="card-body p-4">
-                        <!-- Category Info Banner -->
-                        <div class="alert alert-info border-0 mb-4" role="alert">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-info-circle fa-2x me-3"></i>
-                                <div>
-                                    <h6 class="alert-heading mb-1">Thông Tin Danh Mục Hiện Tại</h6>
-                                    <p class="mb-0">Bạn đang chỉnh sửa danh mục "<strong><?= htmlspecialchars($category->name) ?></strong>"</p>
-                                </div>
+                    <div class="mt-2">Đang tải thông tin danh mục từ CategoryApiController...</div>
+                </div>
+
+                <!-- Edit Form Container - Chứa form chỉnh sửa -->
+                <div id="editContainer" style="display: none;">
+                    <!-- Main Form Card -->
+                    <div class="card shadow-lg border-0" data-aos="fade-up">
+                        <div class="card-header bg-gradient text-white position-relative" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                            <h4 class="card-title mb-0">
+                                <i class="fas fa-edit me-2"></i>Chỉnh Sửa Danh Mục với API
+                            </h4>
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge bg-light text-dark" id="categoryIdBadge">
+                                    ID: Đang tải...
+                                </span>
                             </div>
                         </div>
-
-                        <form action="/category/update/<?= $category->id ?>" method="POST" id="editCategoryForm">
-                            <!-- Category Name -->
-                            <div class="mb-4">
-                                <label for="name" class="form-label fw-bold">
-                                    <i class="fas fa-tag text-primary me-2"></i>Tên Danh Mục *
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-folder"></i>
-                                    </span>
-                                    <input type="text" 
-                                           class="form-control" 
-                                           id="name" 
-                                           name="name" 
-                                           value="<?= htmlspecialchars($_SESSION['old_data']['name'] ?? $category->name) ?>"
-                                           placeholder="Nhập tên danh mục..."
-                                           required
-                                           maxlength="100">
-                                    <div class="input-group-text">
-                                        <span id="nameCounter" class="small text-muted">0/100</span>
+                        
+                        <div class="card-body p-4">
+                            <!-- API Status Indicator -->
+                            <div class="alert alert-info border-0 mb-4" role="alert">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-info-circle fa-2x me-3"></i>
+                                    <div>
+                                        <h6 class="alert-heading mb-1">Sử dụng CategoryApiController</h6>
+                                        <p class="mb-0">Dữ liệu được load từ <code>GET /api/category/{id}</code> và cập nhật qua <code>PUT /api/category/{id}</code></p>
                                     </div>
                                 </div>
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Tên danh mục nên ngắn gọn, dễ hiểu và không trùng lặp.
-                                </div>
-                                <div class="invalid-feedback" id="nameError"></div>
-                                <div class="valid-feedback" id="nameSuccess">
-                                    <i class="fas fa-check-circle me-1"></i>Tên danh mục hợp lệ!
-                                </div>
                             </div>
 
-                            <!-- Category Description -->
-                            <div class="mb-4">
-                                <label for="description" class="form-label fw-bold">
-                                    <i class="fas fa-align-left text-success me-2"></i>Mô Tả Danh Mục
-                                </label>
-                                <textarea class="form-control form-control-lg" 
-                                          id="description" 
-                                          name="description" 
-                                          rows="6" 
-                                          placeholder="Nhập mô tả chi tiết về danh mục này..."
-                                          maxlength="1000"><?= htmlspecialchars($_SESSION['old_data']['description'] ?? $category->description) ?></textarea>
-                                <div class="d-flex justify-content-between">
+                            <!-- Error Container -->
+                            <div id="errorContainer" class="alert alert-danger" style="display: none;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Có lỗi xảy ra:</strong>
+                                <div id="errorMessage" class="mt-2"></div>
+                            </div>
+
+                            <!-- Success Container -->
+                            <div id="successContainer" class="alert alert-success" style="display: none;">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong id="successMessage"></strong>
+                            </div>
+
+                            <!-- Form chỉnh sửa danh mục -->
+                            <form id="editCategoryForm">
+                                <!-- Hidden field chứa ID danh mục -->
+                                <input type="hidden" id="categoryId" name="id">
+
+                                <!-- Tên danh mục -->
+                                <div class="mb-4">
+                                    <label for="name" class="form-label fw-bold">
+                                        <i class="fas fa-tag text-primary me-2"></i>Tên Danh Mục *
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-folder"></i>
+                                        </span>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="name" 
+                                               name="name" 
+                                               placeholder="Nhập tên danh mục..."
+                                               required
+                                               maxlength="100">
+                                        <div class="input-group-text">
+                                            <span id="nameCounter" class="small text-muted">0/100</span>
+                                        </div>
+                                    </div>
                                     <div class="form-text">
-                                        <i class="fas fa-lightbulb me-1"></i>
-                                        Mô tả giúp khách hàng hiểu rõ hơn về danh mục này.
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Tên danh mục nên ngắn gọn, dễ hiểu và không trùng lặp.
                                     </div>
-                                    <small class="text-muted">
-                                        <span id="descCounter">0</span>/1000 ký tự
-                                    </small>
+                                    <div class="invalid-feedback" id="nameError"></div>
+                                    <div class="valid-feedback" id="nameSuccess">
+                                        <i class="fas fa-check-circle me-1"></i>Tên danh mục hợp lệ!
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Comparison Section -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-balance-scale text-info me-2"></i>So Sánh Thay Đổi
-                                </label>
-                                <div class="comparison-container">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="comparison-card before">
-                                                <h6 class="comparison-title">
-                                                    <i class="fas fa-history me-2"></i>Trước Đây
-                                                </h6>
-                                                <div class="comparison-content">
-                                                    <div class="comparison-field">
-                                                        <strong>Tên:</strong>
-                                                        <span><?= htmlspecialchars($category->name) ?></span>
+                                <!-- Mô tả danh mục -->
+                                <div class="mb-4">
+                                    <label for="description" class="form-label fw-bold">
+                                        <i class="fas fa-align-left text-success me-2"></i>Mô Tả Danh Mục
+                                    </label>
+                                    <textarea class="form-control form-control-lg" 
+                                              id="description" 
+                                              name="description" 
+                                              rows="6" 
+                                              placeholder="Nhập mô tả chi tiết về danh mục này..."
+                                              maxlength="1000"></textarea>
+                                    <div class="d-flex justify-content-between">
+                                        <div class="form-text">
+                                            <i class="fas fa-lightbulb me-1"></i>
+                                            Mô tả giúp khách hàng hiểu rõ hơn về danh mục này.
+                                        </div>
+                                        <small class="text-muted">
+                                            <span id="descCounter">0</span>/1000 ký tự
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Comparison Section - So sánh thay đổi -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-balance-scale text-info me-2"></i>So Sánh Thay Đổi
+                                    </label>
+                                    <div class="comparison-container">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="comparison-card before">
+                                                    <h6 class="comparison-title">
+                                                        <i class="fas fa-history me-2"></i>Dữ Liệu Gốc
+                                                    </h6>
+                                                    <div class="comparison-content">
+                                                        <div class="comparison-field">
+                                                            <strong>Tên:</strong>
+                                                            <span id="originalName">Đang tải...</span>
+                                                        </div>
+                                                        <div class="comparison-field">
+                                                            <strong>Mô tả:</strong>
+                                                            <span id="originalDescription">Đang tải...</span>
+                                                        </div>
                                                     </div>
-                                                    <div class="comparison-field">
-                                                        <strong>Mô tả:</strong>
-                                                        <span><?= !empty($category->description) ? htmlspecialchars(substr($category->description, 0, 100)) . '...' : 'Chưa có mô tả' ?></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="comparison-card after">
+                                                    <h6 class="comparison-title">
+                                                        <i class="fas fa-edit me-2"></i>Sau Khi Sửa
+                                                    </h6>
+                                                    <div class="comparison-content">
+                                                        <div class="comparison-field">
+                                                            <strong>Tên:</strong>
+                                                            <span id="newName">Chưa có thay đổi</span>
+                                                        </div>
+                                                        <div class="comparison-field">
+                                                            <strong>Mô tả:</strong>
+                                                            <span id="newDescription">Chưa có thay đổi</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="comparison-card after">
-                                                <h6 class="comparison-title">
-                                                    <i class="fas fa-edit me-2"></i>Sau Khi Sửa
-                                                </h6>
-                                                <div class="comparison-content">
-                                                    <div class="comparison-field">
-                                                        <strong>Tên:</strong>
-                                                        <span id="newName"><?= htmlspecialchars($category->name) ?></span>
-                                                    </div>
-                                                    <div class="comparison-field">
-                                                        <strong>Mô tả:</strong>
-                                                        <span id="newDescription"><?= !empty($category->description) ? htmlspecialchars(substr($category->description, 0, 100)) . '...' : 'Chưa có mô tả' ?></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Change Log -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-clipboard-list text-secondary me-2"></i>Lịch Sử Thay Đổi
-                                </label>
-                                <div class="change-log">
-                                    <div class="timeline">
-                                        <div class="timeline-item">
-                                            <div class="timeline-marker bg-primary"></div>
-                                            <div class="timeline-content">
-                                                <h6 class="timeline-title">Tạo Danh Mục</h6>
-                                                <p class="timeline-description">Danh mục được tạo lần đầu</p>
-                                                <small class="timeline-time">
-                                                    <i class="fas fa-clock me-1"></i>
-                                                    Ngày tạo (giả định)
-                                                </small>
-                                            </div>
-                                        </div>
-                                        <div class="timeline-item">
-                                            <div class="timeline-marker bg-warning"></div>
-                                            <div class="timeline-content">
-                                                <h6 class="timeline-title">Đang Chỉnh Sửa</h6>
-                                                <p class="timeline-description">Cập nhật thông tin danh mục</p>
-                                                <small class="timeline-time">
-                                                    <i class="fas fa-clock me-1"></i>
-                                                    <?= date('d/m/Y H:i') ?>
-                                                </small>
-                                            </div>
-                                        </div>
+                                <!-- Action Buttons -->
+                                <div class="row">
+                                    <div class="col-md-4 d-grid mb-2">
+                                        <button type="submit" class="btn btn-warning btn-lg" id="updateBtn">
+                                            <i class="fas fa-save me-2"></i>Cập Nhật
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4 d-grid mb-2">
+                                        <button type="button" id="viewBtn" class="btn btn-outline-info btn-lg">
+                                            <i class="fas fa-eye me-2"></i>Xem Chi Tiết
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4 d-grid mb-2">
+                                        <a href="/category/list" class="btn btn-outline-secondary btn-lg">
+                                            <i class="fas fa-arrow-left me-2"></i>Quay Lại
+                                        </a>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="row">
-                                <div class="col-md-4 d-grid mb-2">
-                                    <button type="submit" class="btn btn-warning btn-lg">
-                                        <i class="fas fa-save me-2"></i>Cập Nhật
-                                    </button>
-                                </div>
-                                <div class="col-md-4 d-grid mb-2">
-                                    <a href="/category/show/<?= $category->id ?>" class="btn btn-outline-info btn-lg">
-                                        <i class="fas fa-eye me-2"></i>Xem Chi Tiết
-                                    </a>
-                                </div>
-                                <div class="col-md-4 d-grid mb-2">
-                                    <a href="/category/list" class="btn btn-outline-secondary btn-lg">
-                                        <i class="fas fa-arrow-left me-2"></i>Quay Lại
-                                    </a>
-                                </div>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Additional Information Card -->
-                <div class="card mt-4 border-0 bg-light" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            <i class="fas fa-chart-bar text-primary me-2"></i>Thống Kê Danh Mục
-                        </h6>
-                        <div class="row">
-                            <div class="col-md-3 text-center">
-                                <div class="stat-item">
-                                    <i class="fas fa-box fa-2x text-primary mb-2"></i>
-                                    <h5 class="mb-1"><?= rand(5, 50) ?></h5>
-                                    <small class="text-muted">Sản Phẩm</small>
+                    <!-- Additional Information Card -->
+                    <div class="card mt-4 border-0 bg-light" data-aos="fade-up" data-aos-delay="200">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-chart-bar text-primary me-2"></i>Thông Tin Danh Mục
+                            </h6>
+                            <div class="row" id="categoryStats">
+                                <!-- Thống kê sẽ được load bằng JavaScript -->
+                                <div class="col-md-3 text-center">
+                                    <div class="stat-item">
+                                        <i class="fas fa-box fa-2x text-primary mb-2"></i>
+                                        <h5 class="mb-1" id="statProducts">0</h5>
+                                        <small class="text-muted">Sản Phẩm</small>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-3 text-center">
-                                <div class="stat-item">
-                                    <i class="fas fa-eye fa-2x text-success mb-2"></i>
-                                    <h5 class="mb-1"><?= rand(100, 1000) ?></h5>
-                                    <small class="text-muted">Lượt Xem</small>
+                                <div class="col-md-3 text-center">
+                                    <div class="stat-item">
+                                        <i class="fas fa-eye fa-2x text-success mb-2"></i>
+                                        <h5 class="mb-1" id="statViews">0</h5>
+                                        <small class="text-muted">Lượt Xem</small>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-3 text-center">
-                                <div class="stat-item">
-                                    <i class="fas fa-shopping-cart fa-2x text-warning mb-2"></i>
-                                    <h5 class="mb-1"><?= rand(10, 100) ?></h5>
-                                    <small class="text-muted">Đơn Hàng</small>
+                                <div class="col-md-3 text-center">
+                                    <div class="stat-item">
+                                        <i class="fas fa-shopping-cart fa-2x text-warning mb-2"></i>
+                                        <h5 class="mb-1" id="statOrders">0</h5>
+                                        <small class="text-muted">Đơn Hàng</small>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-3 text-center">
-                                <div class="stat-item">
-                                    <i class="fas fa-star fa-2x text-info mb-2"></i>
-                                    <h5 class="mb-1">4.<?= rand(5, 9) ?></h5>
-                                    <small class="text-muted">Đánh Giá</small>
+                                <div class="col-md-3 text-center">
+                                    <div class="stat-item">
+                                        <i class="fas fa-star fa-2x text-info mb-2"></i>
+                                        <h5 class="mb-1" id="statRating">0</h5>
+                                        <small class="text-muted">Đánh Giá</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Warning Card -->
-                <div class="card mt-4 border-warning" data-aos="fade-up" data-aos-delay="300">
-                    <div class="card-body">
-                        <h6 class="card-title text-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Lưu Ý Quan Trọng
-                        </h6>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2">
-                                <i class="fas fa-info-circle text-info me-2"></i>
-                                Việc thay đổi tên danh mục có thể ảnh hưởng đến SEO
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-link text-primary me-2"></i>
-                                URL của danh mục sẽ được cập nhật tự động
-                            </li>
-                            <li class="mb-0">
-                                <i class="fas fa-history text-secondary me-2"></i>
-                                Tất cả thay đổi sẽ được lưu vào lịch sử
-                            </li>
-                        </ul>
+                <!-- Error State - Trạng thái lỗi khi không tải được dữ liệu -->
+                <div id="errorState" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-exclamation-triangle fa-5x text-danger mb-4"></i>
+                    <h3 class="text-danger">Không tìm thấy danh mục</h3>
+                    <p class="text-muted mb-4" id="errorStateMessage">Danh mục không tồn tại hoặc đã bị xóa.</p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button class="btn btn-primary" onclick="loadCategoryData()">
+                            <i class="fas fa-retry me-2"></i>Thử Lại
+                        </button>
+                        <a href="/category/list" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Về danh sách
+                        </a>
                     </div>
                 </div>
             </div>
@@ -262,6 +249,7 @@ include_once 'app/views/shares/header.php';
 </section>
 
 <style>
+/* CSS cho comparison section */
 .comparison-container {
     background: #f8f9fa;
     border-radius: 10px;
@@ -300,60 +288,6 @@ include_once 'app/views/shares/header.php';
     color: #495057;
 }
 
-.timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #dee2e6;
-}
-
-.timeline-item {
-    position: relative;
-    margin-bottom: 25px;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -25px;
-    top: 5px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid white;
-}
-
-.timeline-content {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-}
-
-.timeline-title {
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-    color: #495057;
-}
-
-.timeline-description {
-    font-size: 0.8rem;
-    color: #6c757d;
-    margin-bottom: 8px;
-}
-
-.timeline-time {
-    font-size: 0.75rem;
-    color: #adb5bd;
-}
-
 .stat-item {
     padding: 15px;
     border-radius: 8px;
@@ -363,7 +297,130 @@ include_once 'app/views/shares/header.php';
 </style>
 
 <script>
-// Character counters
+// Lấy ID danh mục từ URL
+const urlParts = window.location.pathname.split('/');
+const categoryId = urlParts[urlParts.length - 1];
+
+console.log('🆔 ID danh mục từ URL:', categoryId);
+
+// Biến lưu trữ dữ liệu gốc
+let originalCategoryData = null;
+
+// Khởi tạo khi tài liệu được tải xong
+$(document).ready(function() {
+    console.log('🚀 Khởi tạo trang chỉnh sửa danh mục với CategoryApiController');
+    
+    // Tải dữ liệu danh mục từ API
+    loadCategoryData();
+    
+    // Thiết lập event listeners
+    setupEventListeners();
+    
+    // Thiết lập character counters
+    setupCharacterCounters();
+});
+
+/**
+ * Tải dữ liệu danh mục từ CategoryApiController
+ * Sử dụng endpoint: GET /api/category/{id}
+ */
+async function loadCategoryData() {
+    console.log('📚 Tải dữ liệu danh mục từ CategoryApiController');
+    
+    try {
+        // Hiển thị loading
+        showLoading();
+        
+        // Gọi CategoryApiController - method show()
+        const response = await fetch(`/api/category/${categoryId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        console.log('📡 Response từ CategoryApiController:', response.status);
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Danh mục không tồn tại');
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        // Chuyển đổi response thành JSON
+        const data = await response.json();
+        console.log('📋 Dữ liệu danh mục nhận được:', data);
+        
+        if (data && data.id) {
+            // Lưu dữ liệu gốc
+            originalCategoryData = {...data};
+            
+            // Điền dữ liệu vào form
+            populateForm(data);
+            
+            // Hiển thị form
+            showEditForm();
+            
+            console.log('✅ Đã tải thành công dữ liệu danh mục');
+            
+        } else {
+            throw new Error('Dữ liệu danh mục không hợp lệ');
+        }
+        
+    } catch (error) {
+        console.error('❌ Lỗi khi tải dữ liệu danh mục:', error);
+        showErrorState(error.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+/**
+ * Điền dữ liệu vào form
+ * @param {Object} category - Dữ liệu danh mục từ API
+ */
+function populateForm(category) {
+    console.log('📝 Điền dữ liệu vào form:', category.name);
+    
+    // Điền các field cơ bản
+    document.getElementById('categoryId').value = category.id;
+    document.getElementById('name').value = category.name;
+    document.getElementById('description').value = category.description || '';
+    
+    // Cập nhật badge ID
+    document.getElementById('categoryIdBadge').textContent = `ID: ${category.id}`;
+    
+    // Cập nhật comparison - phần dữ liệu gốc
+    document.getElementById('originalName').textContent = category.name;
+    document.getElementById('originalDescription').textContent = 
+        category.description || 'Chưa có mô tả';
+    
+    // Cập nhật comparison - phần mới (ban đầu giống gốc)
+    updateComparison();
+    
+    // Cập nhật character counters
+    updateCharCounter('name', 'nameCounter', 100);
+    updateCharCounter('description', 'descCounter', 1000);
+    
+    // Cập nhật thống kê (giả lập)
+    updateStatistics();
+}
+
+/**
+ * Thiết lập character counters
+ */
+function setupCharacterCounters() {
+    // Counter sẽ được setup sau khi load dữ liệu
+}
+
+/**
+ * Cập nhật character counter
+ * @param {string} inputId - ID của input
+ * @param {string} counterId - ID của counter
+ * @param {number} maxLength - Độ dài tối đa
+ */
 function updateCharCounter(inputId, counterId, maxLength) {
     const input = document.getElementById(inputId);
     const counter = document.getElementById(counterId);
@@ -372,6 +429,7 @@ function updateCharCounter(inputId, counterId, maxLength) {
         const length = input.value.length;
         counter.textContent = length;
         
+        // Đổi màu theo độ dài
         if (length > maxLength * 0.8) {
             counter.className = 'small text-warning';
         } else if (length === maxLength) {
@@ -380,17 +438,48 @@ function updateCharCounter(inputId, counterId, maxLength) {
             counter.className = 'small text-muted';
         }
         
+        // Cập nhật comparison
         updateComparison();
     }
     
+    // Lắng nghe sự kiện input
     input.addEventListener('input', update);
-    update();
+    update(); // Cập nhật lần đầu
 }
 
-updateCharCounter('name', 'nameCounter', 100);
-updateCharCounter('description', 'descCounter', 1000);
+/**
+ * Thiết lập event listeners
+ */
+function setupEventListeners() {
+    console.log('🎧 Thiết lập event listeners');
+    
+    // Xử lý submit form
+    $('#editCategoryForm').on('submit', function(e) {
+        e.preventDefault();
+        console.log('📝 Form chỉnh sửa được submit');
+        updateCategory();
+    });
+    
+    // Nút xem chi tiết
+    $('#viewBtn').on('click', function() {
+        console.log('👁️ Chuyển đến trang xem chi tiết');
+        window.location.href = `/category/show/${categoryId}`;
+    });
+    
+    // Validation realtime cho tên danh mục
+    $('#name').on('input', function() {
+        validateCategoryName(this.value.trim());
+    });
+    
+    // Cập nhật comparison khi thay đổi mô tả
+    $('#description').on('input', function() {
+        updateComparison();
+    });
+}
 
-// Update comparison section
+/**
+ * Cập nhật comparison section
+ */
 function updateComparison() {
     const newName = document.getElementById('name').value || 'Chưa có tên';
     const newDescription = document.getElementById('description').value || 'Chưa có mô tả';
@@ -400,213 +489,305 @@ function updateComparison() {
         newDescription.length > 100 ? newDescription.substring(0, 100) + '...' : newDescription;
 }
 
-// Real-time validation for category name
-document.getElementById('name').addEventListener('input', function() {
-    const name = this.value.trim();
-    const nameError = document.getElementById('nameError');
-    const nameSuccess = document.getElementById('nameSuccess');
-    const originalName = '<?= htmlspecialchars($category->name) ?>';
-    
-    if (name.length === 0) {
-        this.classList.remove('is-invalid', 'is-valid');
-        nameError.textContent = '';
-        nameSuccess.style.display = 'none';
-        return;
-    }
-    
-    if (name.length < 3) {
-        this.classList.add('is-invalid');
-        this.classList.remove('is-valid');
-        nameError.textContent = 'Tên danh mục phải có ít nhất 3 ký tự';
-        nameSuccess.style.display = 'none';
-    } else if (name !== originalName) {
-        // Check for duplicate name via AJAX (excluding current category)
-        checkCategoryName(name, <?= $category->id ?>);
-    } else {
-        // Same as original name
-        this.classList.remove('is-invalid');
-        this.classList.add('is-valid');
-        nameError.textContent = '';
-        nameSuccess.style.display = 'block';
-    }
-});
-
-function checkCategoryName(name, excludeId) {
+/**
+ * Validate tên danh mục
+ * @param {string} name - Tên danh mục
+ */
+function validateCategoryName(name) {
     const nameInput = document.getElementById('name');
     const nameError = document.getElementById('nameError');
     const nameSuccess = document.getElementById('nameSuccess');
     
-    fetch('/category/checkName', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-            name: name,
-            exclude_id: excludeId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.exists) {
-            nameInput.classList.add('is-invalid');
-            nameInput.classList.remove('is-valid');
-            nameError.textContent = 'Tên danh mục đã tồn tại';
-            nameSuccess.style.display = 'none';
-        } else {
-            nameInput.classList.remove('is-invalid');
-            nameInput.classList.add('is-valid');
-            nameError.textContent = '';
-            nameSuccess.style.display = 'block';
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
-// Form validation
-document.getElementById('editCategoryForm').addEventListener('submit', function(e) {
-    const name = document.getElementById('name').value.trim();
-    const originalName = '<?= htmlspecialchars($category->name) ?>';
-    const originalDesc = '<?= htmlspecialchars($category->description) ?>';
-    const currentDesc = document.getElementById('description').value.trim();
+    // Reset trạng thái
+    nameInput.classList.remove('is-invalid', 'is-valid');
+    nameError.textContent = '';
+    nameSuccess.style.display = 'none';
     
-    if (!name) {
-        e.preventDefault();
-        Swal.fire({
-            icon: 'error',
-            title: 'Lỗi!',
-            text: 'Vui lòng nhập tên danh mục.',
-        });
+    if (name.length === 0) {
         return;
     }
     
     if (name.length < 3) {
-        e.preventDefault();
-        Swal.fire({
-            icon: 'error',
-            title: 'Lỗi!',
-            text: 'Tên danh mục phải có ít nhất 3 ký tự.',
-        });
+        nameInput.classList.add('is-invalid');
+        nameError.textContent = 'Tên danh mục phải có ít nhất 3 ký tự';
         return;
     }
     
-    // Check if there are any changes
-    if (name === originalName && currentDesc === originalDesc) {
-        e.preventDefault();
-        Swal.fire({
-            icon: 'info',
-            title: 'Không có thay đổi!',
-            text: 'Bạn chưa thực hiện thay đổi nào.',
-        });
+    if (name === originalCategoryData?.name) {
+        // Tên giống như ban đầu
+        nameInput.classList.add('is-valid');
+        nameSuccess.style.display = 'block';
         return;
     }
     
-    // Confirm update
-    e.preventDefault();
-    Swal.fire({
-        title: 'Xác nhận cập nhật?',
-        text: "Bạn có chắc chắn muốn lưu những thay đổi này?",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#f39c12',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Cập nhật',
-        cancelButtonText: 'Hủy'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Show loading
+    // Tên đã thay đổi và hợp lệ
+    nameInput.classList.add('is-valid');
+    nameSuccess.style.display = 'block';
+    
+    console.log('✅ Tên danh mục hợp lệ:', name);
+}
+
+/**
+ * Cập nhật danh mục sử dụng CategoryApiController
+ * Sử dụng endpoint: PUT /api/category/{id}
+ */
+async function updateCategory() {
+    console.log('📤 Cập nhật danh mục qua CategoryApiController');
+    
+    const updateBtn = document.getElementById('updateBtn');
+    const originalContent = updateBtn.innerHTML;
+    
+    try {
+        // Hiển thị trạng thái loading
+        updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang cập nhật...';
+        updateBtn.disabled = true;
+        
+        // Xóa các thông báo trước đó
+        clearMessages();
+        
+        // Lấy dữ liệu từ form
+        const formData = {
+            name: document.getElementById('name').value.trim(),
+            description: document.getElementById('description').value.trim()
+        };
+        
+        console.log('📋 Dữ liệu gửi đến API:', formData);
+        
+        // Kiểm tra có thay đổi không
+        if (!hasChanges(formData)) {
+            showError('Không có thay đổi nào để cập nhật');
+            return;
+        }
+        
+        // Validate dữ liệu
+        if (!validateFormData(formData)) {
+            throw new Error('Dữ liệu không hợp lệ');
+        }
+        
+        // Gửi request đến CategoryApiController - method update()
+        const response = await fetch(`/api/category/${categoryId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        console.log('📡 Response từ CategoryApiController:', response.status);
+        
+        // Xử lý response
+        const data = await response.json();
+        console.log('📋 Response data:', data);
+        
+        if (response.ok && data.message) {
+            // Cập nhật thành công
+            console.log('✅ Cập nhật danh mục thành công');
+            
+            showSuccess(data.message);
+            
+            // Cập nhật dữ liệu gốc
+            originalCategoryData = {...formData, id: categoryId};
+            
+            // Hiển thị modal xác nhận
             Swal.fire({
-                title: 'Đang cập nhật...',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                willOpen: () => {
-                    Swal.showLoading();
+                icon: 'success',
+                title: 'Thành công!',
+                text: 'Danh mục đã được cập nhật thành công',
+                showCancelButton: true,
+                confirmButtonText: 'Xem chi tiết',
+                cancelButtonText: 'Tiếp tục chỉnh sửa',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `/category/show/${categoryId}`;
                 }
             });
             
-            // Submit form
-            this.submit();
+        } else {
+            // Có lỗi từ API
+            throw new Error(data.message || 'Không thể cập nhật danh mục');
         }
-    });
-});
-
-// Auto-save functionality
-let autoSaveTimeout;
-function autoSave() {
-    clearTimeout(autoSaveTimeout);
-    autoSaveTimeout = setTimeout(() => {
-        const formData = {
-            id: <?= $category->id ?>,
-            name: document.getElementById('name').value,
-            description: document.getElementById('description').value,
-            timestamp: new Date().toISOString()
-        };
         
-        localStorage.setItem('categoryEditDraft_<?= $category->id ?>', JSON.stringify(formData));
+    } catch (error) {
+        console.error('❌ Lỗi khi cập nhật danh mục:', error);
+        showError(error.message);
         
-        // Show auto-save indicator
-        const indicator = document.createElement('div');
-        indicator.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        indicator.innerHTML = `
-            <div class="toast show" role="alert">
-                <div class="toast-body">
-                    <i class="fas fa-save text-success me-2"></i>
-                    Đã tự động lưu bản nháp
-                </div>
-            </div>
-        `;
-        document.body.appendChild(indicator);
-        
-        setTimeout(() => {
-            indicator.remove();
-        }, 3000);
-    }, 5000);
+    } finally {
+        // Khôi phục nút submit
+        updateBtn.innerHTML = originalContent;
+        updateBtn.disabled = false;
+    }
 }
 
-document.getElementById('name').addEventListener('input', autoSave);
-document.getElementById('description').addEventListener('input', autoSave);
+/**
+ * Kiểm tra có thay đổi so với dữ liệu gốc
+ * @param {Object} formData - Dữ liệu từ form
+ * @returns {boolean}
+ */
+function hasChanges(formData) {
+    if (!originalCategoryData) return true;
+    
+    return formData.name !== originalCategoryData.name ||
+           formData.description !== (originalCategoryData.description || '');
+}
 
-// Load auto-saved draft
-window.addEventListener('load', () => {
-    const draft = localStorage.getItem('categoryEditDraft_<?= $category->id ?>');
-    if (draft) {
-        const data = JSON.parse(draft);
-        const draftTime = new Date(data.timestamp);
-        const timeDiff = new Date() - draftTime;
-        
-        // If draft is less than 1 hour old
-        if (timeDiff < 3600000 && confirm('Tìm thấy bản nháp được lưu lúc ' + draftTime.toLocaleString() + '. Bạn có muốn khôi phục không?')) {
-            document.getElementById('name').value = data.name || '';
-            document.getElementById('description').value = data.description || '';
-            updateComparison();
+/**
+ * Validate dữ liệu form
+ * @param {Object} data - Dữ liệu form
+ * @returns {boolean}
+ */
+function validateFormData(data) {
+    if (!data.name || data.name.length < 3) {
+        showFieldError('name', 'Tên danh mục phải có ít nhất 3 ký tự');
+        return false;
+    }
+    
+    if (data.name.length > 100) {
+        showFieldError('name', 'Tên danh mục không được vượt quá 100 ký tự');
+        return false;
+    }
+    
+    if (data.description && data.description.length > 1000) {
+        showFieldError('description', 'Mô tả không được vượt quá 1000 ký tự');
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Cập nhật thống kê (giả lập)
+ */
+function updateStatistics() {
+    // Tạo số liệu giả lập
+    const stats = {
+        products: Math.floor(Math.random() * 45) + 5,
+        views: Math.floor(Math.random() * 900) + 100,
+        orders: Math.floor(Math.random() * 90) + 10,
+        rating: (Math.random() * 1 + 4).toFixed(1)
+    };
+    
+    // Animate numbers
+    animateValue(document.getElementById('statProducts'), 0, stats.products, 1000);
+    animateValue(document.getElementById('statViews'), 0, stats.views, 1200);
+    animateValue(document.getElementById('statOrders'), 0, stats.orders, 800);
+    
+    setTimeout(() => {
+        document.getElementById('statRating').textContent = stats.rating;
+    }, 500);
+}
+
+// Các hàm utility tương tự như trong create...
+
+/**
+ * Hiển thị thông báo lỗi cho field
+ */
+function showFieldError(fieldName, message) {
+    const field = document.getElementById(fieldName);
+    if (field) {
+        field.classList.add('is-invalid');
+        const errorElement = document.getElementById(fieldName + 'Error');
+        if (errorElement) {
+            errorElement.textContent = message;
         }
     }
-});
+}
 
-// Clear draft on successful submit
-document.getElementById('editCategoryForm').addEventListener('submit', () => {
-    localStorage.removeItem('categoryEditDraft_<?= $category->id ?>');
-});
+/**
+ * Hiển thị thông báo thành công
+ */
+function showSuccess(message) {
+    const container = document.getElementById('successContainer');
+    const messageElement = document.getElementById('successMessage');
+    
+    messageElement.textContent = message;
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
 
-// Initialize comparison
-updateComparison();
+/**
+ * Hiển thị thông báo lỗi
+ */
+function showError(message) {
+    const container = document.getElementById('errorContainer');
+    const messageElement = document.getElementById('errorMessage');
+    
+    messageElement.textContent = message;
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
 
-// Animate timeline items
-anime({
-    targets: '.timeline-item',
-    translateX: [-50, 0],
-    opacity: [0, 1],
-    delay: function(el, i) { return i * 200; },
-    duration: 800,
-    easing: 'easeOutQuad'
-});
+/**
+ * Xóa tất cả thông báo
+ */
+function clearMessages() {
+    document.getElementById('errorContainer').style.display = 'none';
+    document.getElementById('successContainer').style.display = 'none';
+    
+    document.querySelectorAll('.is-invalid').forEach(field => {
+        field.classList.remove('is-invalid');
+    });
+    
+    document.querySelectorAll('.invalid-feedback').forEach(feedback => {
+        feedback.textContent = '';
+    });
+}
 
-<?php if (isset($_SESSION['old_data'])): ?>
-// Clear old data from session
-<?php unset($_SESSION['old_data']); ?>
-<?php endif; ?>
+/**
+ * Animate giá trị số
+ */
+function animateValue(obj, start, end, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.textContent = Math.floor(progress * (end - start) + start);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+/**
+ * Hiển thị loading
+ */
+function showLoading() {
+    document.getElementById('loadingContainer').style.display = 'block';
+    document.getElementById('editContainer').style.display = 'none';
+    document.getElementById('errorState').style.display = 'none';
+}
+
+/**
+ * Ẩn loading
+ */
+function hideLoading() {
+    document.getElementById('loadingContainer').style.display = 'none';
+}
+
+/**
+ * Hiển thị form chỉnh sửa
+ */
+function showEditForm() {
+    document.getElementById('loadingContainer').style.display = 'none';
+    document.getElementById('editContainer').style.display = 'block';
+    document.getElementById('errorState').style.display = 'none';
+}
+
+/**
+ * Hiển thị trạng thái lỗi
+ */
+function showErrorState(message) {
+    document.getElementById('loadingContainer').style.display = 'none';
+    document.getElementById('editContainer').style.display = 'none';
+    document.getElementById('errorState').style.display = 'block';
+    document.getElementById('errorStateMessage').textContent = message;
+}
+
+console.log('🎉 Category Edit API Script loaded successfully');
+console.log(`👤 Current user: MHoang287`);
+console.log(`📅 Current time: 2025-06-13 03:15:13`);
 </script>
 
 <?php include_once 'app/views/shares/footer.php'; ?>

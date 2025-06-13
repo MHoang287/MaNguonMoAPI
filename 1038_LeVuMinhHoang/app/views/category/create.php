@@ -5,7 +5,7 @@ include_once 'app/views/shares/header.php';
 
 <section class="py-5">
     <div class="container">
-        <!-- Breadcrumb -->
+        <!-- Breadcrumb - Đường dẫn điều hướng -->
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Trang Chủ</a></li>
@@ -20,7 +20,7 @@ include_once 'app/views/shares/header.php';
                 <div class="card shadow-lg border-0" data-aos="fade-up">
                     <div class="card-header bg-gradient text-white position-relative" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                         <h4 class="card-title mb-0">
-                            <i class="fas fa-folder-plus me-2"></i>Tạo Danh Mục Mới
+                            <i class="fas fa-folder-plus me-2"></i>Tạo Danh Mục Mới với API
                         </h4>
                         <div class="position-absolute top-0 end-0 m-3">
                             <span class="badge bg-light text-dark">
@@ -30,34 +30,33 @@ include_once 'app/views/shares/header.php';
                     </div>
                     
                     <div class="card-body p-4">
-                        <!-- Progress Steps -->
-                        <div class="progress-steps mb-4">
-                            <div class="d-flex justify-content-center">
-                                <div class="step active">
-                                    <div class="step-icon">
-                                        <i class="fas fa-edit"></i>
-                                    </div>
-                                    <span>Thông Tin</span>
-                                </div>
-                                <div class="step-line"></div>
-                                <div class="step">
-                                    <div class="step-icon">
-                                        <i class="fas fa-check"></i>
-                                    </div>
-                                    <span>Xác Nhận</span>
-                                </div>
-                                <div class="step-line"></div>
-                                <div class="step">
-                                    <div class="step-icon">
-                                        <i class="fas fa-save"></i>
-                                    </div>
-                                    <span>Hoàn Tất</span>
+                        <!-- API Status Indicator -->
+                        <div class="alert alert-info border-0 mb-4" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-info-circle fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="alert-heading mb-1">Sử dụng CategoryApiController</h6>
+                                    <p class="mb-0">Dữ liệu sẽ được gửi đến <code>POST /api/category</code></p>
                                 </div>
                             </div>
                         </div>
 
-                        <form action="/category/store" method="POST" id="categoryForm">
-                            <!-- Category Name -->
+                        <!-- Error Container - Hiển thị lỗi từ API -->
+                        <div id="errorContainer" class="alert alert-danger" style="display: none;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Có lỗi xảy ra:</strong>
+                            <div id="errorMessage" class="mt-2"></div>
+                        </div>
+
+                        <!-- Success Container - Hiển thị thành công -->
+                        <div id="successContainer" class="alert alert-success" style="display: none;">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong id="successMessage"></strong>
+                        </div>
+
+                        <!-- Form tạo danh mục -->
+                        <form id="categoryForm">
+                            <!-- Tên danh mục -->
                             <div class="mb-4">
                                 <label for="name" class="form-label fw-bold">
                                     <i class="fas fa-tag text-primary me-2"></i>Tên Danh Mục *
@@ -70,7 +69,6 @@ include_once 'app/views/shares/header.php';
                                            class="form-control" 
                                            id="name" 
                                            name="name" 
-                                           value="<?= htmlspecialchars($_SESSION['old_data']['name'] ?? '') ?>"
                                            placeholder="Nhập tên danh mục..."
                                            required
                                            maxlength="100">
@@ -88,7 +86,7 @@ include_once 'app/views/shares/header.php';
                                 </div>
                             </div>
 
-                            <!-- Category Description -->
+                            <!-- Mô tả danh mục -->
                             <div class="mb-4">
                                 <label for="description" class="form-label fw-bold">
                                     <i class="fas fa-align-left text-success me-2"></i>Mô Tả Danh Mục
@@ -97,8 +95,8 @@ include_once 'app/views/shares/header.php';
                                           id="description" 
                                           name="description" 
                                           rows="6" 
-                                          placeholder="Nhập mô tả chi tiết về danh mục này...&#10;&#10;Ví dụ:&#10;- Đặc điểm chính của danh mục&#10;- Loại sản phẩm sẽ có trong danh mục&#10;- Mục đích sử dụng..."
-                                          maxlength="1000"><?= htmlspecialchars($_SESSION['old_data']['description'] ?? '') ?></textarea>
+                                          placeholder="Nhập mô tả chi tiết về danh mục này...&#10;&#10;Ví dụ:&#10;- Đặc điểm chính của danh mục&#10;- Loại sản phẩm sẽ có trong danh mục&#10;- Thông tin hữu ích cho khách hàng"
+                                          maxlength="1000"></textarea>
                                 <div class="d-flex justify-content-between">
                                     <div class="form-text">
                                         <i class="fas fa-lightbulb me-1"></i>
@@ -110,85 +108,7 @@ include_once 'app/views/shares/header.php';
                                 </div>
                             </div>
 
-                            <!-- Category Icon Selection -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-icons text-warning me-2"></i>Biểu Tượng Danh Mục
-                                </label>
-                                <div class="icon-selection">
-                                    <div class="row">
-                                        <?php 
-                                        $icons = [
-                                            'fa-laptop' => 'Laptop',
-                                            'fa-mobile-alt' => 'Điện Thoại', 
-                                            'fa-tablet-alt' => 'Tablet',
-                                            'fa-headphones' => 'Tai Nghe',
-                                            'fa-camera' => 'Camera',
-                                            'fa-gamepad' => 'Gaming',
-                                            'fa-tv' => 'TV & Monitor',
-                                            'fa-keyboard' => 'Phụ Kiện',
-                                            'fa-mouse' => 'Chuột',
-                                            'fa-usb' => 'USB & Lưu Trữ',
-                                            'fa-wifi' => 'Mạng & Kết Nối',
-                                            'fa-battery-full' => 'Pin & Sạc'
-                                        ];
-                                        
-                                        foreach ($icons as $iconClass => $iconName): 
-                                        ?>
-                                            <div class="col-lg-3 col-md-4 col-6 mb-3">
-                                                <div class="icon-option" data-icon="<?= $iconClass ?>">
-                                                    <div class="icon-preview">
-                                                        <i class="fas <?= $iconClass ?> fa-2x"></i>
-                                                    </div>
-                                                    <small class="icon-name"><?= $iconName ?></small>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <input type="hidden" name="icon" id="selectedIcon" value="">
-                                </div>
-                            </div>
-
-                            <!-- Category Color -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-palette text-info me-2"></i>Màu Sắc Danh Mục
-                                </label>
-                                <div class="color-selection">
-                                    <div class="row">
-                                        <?php 
-                                        $colors = [
-                                            '#667eea' => 'Xanh Tím',
-                                            '#764ba2' => 'Tím Đậm',
-                                            '#f093fb' => 'Hồng Nhạt',
-                                            '#f5576c' => 'Đỏ Coral',
-                                            '#4facfe' => 'Xanh Dương',
-                                            '#00f2fe' => 'Xanh Cyan',
-                                            '#43e97b' => 'Xanh Lá',
-                                            '#38f9d7' => 'Xanh Mint',
-                                            '#ffecd2' => 'Vàng Nhạt',
-                                            '#fcb69f' => 'Cam Nhạt',
-                                            '#a8edea' => 'Xanh Pastel',
-                                            '#fed6e3' => 'Hồng Pastel'
-                                        ];
-                                        
-                                        foreach ($colors as $colorCode => $colorName): 
-                                        ?>
-                                            <div class="col-lg-2 col-md-3 col-4 mb-3">
-                                                <div class="color-option" data-color="<?= $colorCode ?>" style="background: <?= $colorCode ?>;">
-                                                    <div class="color-check">
-                                                        <i class="fas fa-check"></i>
-                                                    </div>
-                                                    <small class="color-name"><?= $colorName ?></small>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <input type="hidden" name="color" id="selectedColor" value="">
-                                </div>
-                            </div>
-
-                            <!-- Preview Section -->
+                            <!-- Preview Section - Xem trước -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold">
                                     <i class="fas fa-eye text-secondary me-2"></i>Xem Trước
@@ -209,7 +129,7 @@ include_once 'app/views/shares/header.php';
                             <!-- Action Buttons -->
                             <div class="row">
                                 <div class="col-md-6 d-grid mb-2">
-                                    <button type="submit" class="btn btn-primary btn-lg">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                                         <i class="fas fa-save me-2"></i>Tạo Danh Mục
                                     </button>
                                 </div>
@@ -223,7 +143,7 @@ include_once 'app/views/shares/header.php';
                     </div>
                 </div>
 
-                <!-- Help Card -->
+                <!-- Help Card - Thẻ hướng dẫn -->
                 <div class="card mt-4 border-0 bg-light" data-aos="fade-up" data-aos-delay="200">
                     <div class="card-body">
                         <h6 class="card-title">
@@ -255,117 +175,6 @@ include_once 'app/views/shares/header.php';
 </section>
 
 <style>
-.progress-steps {
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.progress-steps .d-flex {
-    align-items: center;
-}
-
-.step {
-    text-align: center;
-    position: relative;
-}
-
-.step-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #dee2e6;
-    color: #6c757d;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.step.active .step-icon {
-    background: #0d6efd;
-    color: white;
-}
-
-.step-line {
-    flex: 1;
-    height: 2px;
-    background: #dee2e6;
-    margin: 0 15px;
-}
-
-.icon-option {
-    text-align: center;
-    padding: 15px;
-    border: 2px solid #dee2e6;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.icon-option:hover {
-    border-color: #0d6efd;
-    background-color: #f8f9ff;
-}
-
-.icon-option.selected {
-    border-color: #0d6efd;
-    background-color: #e7f1ff;
-}
-
-.icon-preview {
-    margin-bottom: 8px;
-    color: #6c757d;
-}
-
-.icon-option.selected .icon-preview {
-    color: #0d6efd;
-}
-
-.color-option {
-    height: 60px;
-    border-radius: 10px;
-    cursor: pointer;
-    position: relative;
-    border: 3px solid transparent;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.color-option:hover {
-    transform: scale(1.1);
-    border-color: #fff;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.color-option.selected {
-    border-color: #000;
-    transform: scale(1.1);
-}
-
-.color-check {
-    color: white;
-    font-size: 1.2rem;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.color-option.selected .color-check {
-    opacity: 1;
-}
-
-.color-name {
-    position: absolute;
-    bottom: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.7rem;
-    white-space: nowrap;
-}
-
 .category-preview {
     border: 2px dashed #dee2e6;
     border-radius: 10px;
@@ -411,7 +220,39 @@ include_once 'app/views/shares/header.php';
 </style>
 
 <script>
-// Character counters
+// Khởi tạo khi tài liệu được tải xong
+$(document).ready(function() {
+    console.log('🚀 Khởi tạo trang tạo danh mục với CategoryApiController');
+    
+    // Thiết lập character counters
+    setupCharacterCounters();
+    
+    // Thiết lập event listeners
+    setupEventListeners();
+    
+    // Khởi tạo preview
+    updatePreview();
+});
+
+/**
+ * Thiết lập các bộ đếm ký tự
+ */
+function setupCharacterCounters() {
+    console.log('🔢 Thiết lập character counters');
+    
+    // Counter cho tên danh mục
+    updateCharCounter('name', 'nameCounter', 100);
+    
+    // Counter cho mô tả
+    updateCharCounter('description', 'descCounter', 1000);
+}
+
+/**
+ * Cập nhật bộ đếm ký tự
+ * @param {string} inputId - ID của input
+ * @param {string} counterId - ID của counter
+ * @param {number} maxLength - Độ dài tối đa
+ */
 function updateCharCounter(inputId, counterId, maxLength) {
     const input = document.getElementById(inputId);
     const counter = document.getElementById(counterId);
@@ -420,213 +261,295 @@ function updateCharCounter(inputId, counterId, maxLength) {
         const length = input.value.length;
         counter.textContent = length;
         
+        // Đổi màu theo độ dài
         if (length > maxLength * 0.8) {
-            counter.className = 'text-warning';
+            counter.className = 'small text-warning';
         } else if (length === maxLength) {
-            counter.className = 'text-danger';
+            counter.className = 'small text-danger';
         } else {
-            counter.className = 'text-muted';
+            counter.className = 'small text-muted';
         }
+        
+        // Cập nhật preview
+        updatePreview();
     }
     
+    // Lắng nghe sự kiện input
     input.addEventListener('input', update);
-    update();
+    update(); // Cập nhật lần đầu
 }
 
-updateCharCounter('name', 'nameCounter', 100);
-updateCharCounter('description', 'descCounter', 1000);
+/**
+ * Thiết lập các event listener
+ */
+function setupEventListeners() {
+    console.log('🎧 Thiết lập event listeners');
+    
+    // Xử lý submit form
+    $('#categoryForm').on('submit', function(e) {
+        e.preventDefault();
+        console.log('📝 Form được submit');
+        submitCategory();
+    });
+    
+    // Validation realtime cho tên danh mục
+    $('#name').on('input', function() {
+        validateCategoryName(this.value.trim());
+    });
+    
+    // Cập nhật preview khi thay đổi mô tả
+    $('#description').on('input', function() {
+        updatePreview();
+    });
+}
 
-// Real-time validation for category name
-document.getElementById('name').addEventListener('input', function() {
-    const name = this.value.trim();
-    const nameError = document.getElementById('nameError');
-    const nameSuccess = document.getElementById('nameSuccess');
-    
-    if (name.length === 0) {
-        this.classList.remove('is-invalid', 'is-valid');
-        nameError.textContent = '';
-        nameSuccess.style.display = 'none';
-        return;
-    }
-    
-    if (name.length < 3) {
-        this.classList.add('is-invalid');
-        this.classList.remove('is-valid');
-        nameError.textContent = 'Tên danh mục phải có ít nhất 3 ký tự';
-        nameSuccess.style.display = 'none';
-    } else {
-        // Check for duplicate name via AJAX
-        checkCategoryName(name);
-    }
-    
-    updatePreview();
-});
-
-function checkCategoryName(name) {
+/**
+ * Validate tên danh mục realtime
+ * @param {string} name - Tên danh mục
+ */
+function validateCategoryName(name) {
     const nameInput = document.getElementById('name');
     const nameError = document.getElementById('nameError');
     const nameSuccess = document.getElementById('nameSuccess');
     
-    // Simulate AJAX call to check duplicate
-    fetch('/category/checkName', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: name })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.exists) {
-            nameInput.classList.add('is-invalid');
-            nameInput.classList.remove('is-valid');
-            nameError.textContent = 'Tên danh mục đã tồn tại';
-            nameSuccess.style.display = 'none';
-        } else {
-            nameInput.classList.remove('is-invalid');
-            nameInput.classList.add('is-valid');
-            nameError.textContent = '';
-            nameSuccess.style.display = 'block';
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
-// Icon selection
-document.querySelectorAll('.icon-option').forEach(option => {
-    option.addEventListener('click', function() {
-        document.querySelectorAll('.icon-option').forEach(opt => opt.classList.remove('selected'));
-        this.classList.add('selected');
-        document.getElementById('selectedIcon').value = this.dataset.icon;
-        updatePreview();
-    });
-});
-
-// Color selection
-document.querySelectorAll('.color-option').forEach(option => {
-    option.addEventListener('click', function() {
-        document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-        this.classList.add('selected');
-        document.getElementById('selectedColor').value = this.dataset.color;
-        updatePreview();
-    });
-});
-
-// Description change
-document.getElementById('description').addEventListener('input', updatePreview);
-
-// Update preview
-function updatePreview() {
-    const name = document.getElementById('name').value || 'Tên Danh Mục';
-    const description = document.getElementById('description').value || 'Mô tả danh mục sẽ hiển thị ở đây...';
-    const icon = document.getElementById('selectedIcon').value || 'fa-folder';
-    const color = document.getElementById('selectedColor').value || '#667eea';
+    // Reset trạng thái
+    nameInput.classList.remove('is-invalid', 'is-valid');
+    nameError.textContent = '';
+    nameSuccess.style.display = 'none';
     
-    document.getElementById('previewName').textContent = name;
-    document.getElementById('previewDescription').textContent = description;
-    document.getElementById('previewIcon').className = `fas ${icon} preview-icon`;
-    
-    const previewHeader = document.getElementById('previewHeader');
-    previewHeader.style.background = `linear-gradient(135deg, ${color} 0%, ${adjustColor(color, -20)} 100%)`;
-}
-
-function adjustColor(color, amount) {
-    const usePound = color[0] === "#";
-    const col = usePound ? color.slice(1) : color;
-    const num = parseInt(col, 16);
-    let r = (num >> 16) + amount;
-    let g = (num >> 8 & 0x00FF) + amount;
-    let b = (num & 0x0000FF) + amount;
-    r = r > 255 ? 255 : r < 0 ? 0 : r;
-    g = g > 255 ? 255 : g < 0 ? 0 : g;
-    b = b > 255 ? 255 : b < 0 ? 0 : b;
-    return (usePound ? "#" : "") + (r << 16 | g << 8 | b).toString(16).padStart(6, '0');
-}
-
-// Form validation
-document.getElementById('categoryForm').addEventListener('submit', function(e) {
-    const name = document.getElementById('name').value.trim();
-    
-    if (!name) {
-        e.preventDefault();
-        Swal.fire({
-            icon: 'error',
-            title: 'Lỗi!',
-            text: 'Vui lòng nhập tên danh mục.',
-        });
-        return;
+    if (name.length === 0) {
+        return; // Không validate khi rỗng
     }
     
     if (name.length < 3) {
-        e.preventDefault();
-        Swal.fire({
-            icon: 'error',
-            title: 'Lỗi!',
-            text: 'Tên danh mục phải có ít nhất 3 ký tự.',
-        });
+        // Tên quá ngắn
+        nameInput.classList.add('is-invalid');
+        nameError.textContent = 'Tên danh mục phải có ít nhất 3 ký tự';
         return;
     }
     
-    // Show loading
-    Swal.fire({
-        title: 'Đang tạo danh mục...',
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        willOpen: () => {
-            Swal.showLoading();
-        }
-    });
-});
-
-// Initialize preview
-updatePreview();
-
-// Auto-save draft functionality
-setInterval(() => {
-    const formData = {
-        name: document.getElementById('name').value,
-        description: document.getElementById('description').value,
-        icon: document.getElementById('selectedIcon').value,
-        color: document.getElementById('selectedColor').value
-    };
+    if (name.length > 100) {
+        // Tên quá dài
+        nameInput.classList.add('is-invalid');
+        nameError.textContent = 'Tên danh mục không được vượt quá 100 ký tự';
+        return;
+    }
     
-    localStorage.setItem('categoryDraft', JSON.stringify(formData));
-}, 30000); // Save every 30 seconds
+    // Validation thành công
+    nameInput.classList.add('is-valid');
+    nameSuccess.style.display = 'block';
+    
+    console.log('✅ Tên danh mục hợp lệ:', name);
+}
 
-// Load draft on page load
-window.addEventListener('load', () => {
-    const draft = localStorage.getItem('categoryDraft');
-    if (draft) {
-        const data = JSON.parse(draft);
+/**
+ * Cập nhật preview
+ */
+function updatePreview() {
+    const name = document.getElementById('name').value || 'Tên Danh Mục';
+    const description = document.getElementById('description').value || 'Mô tả danh mục sẽ hiển thị ở đây...';
+    
+    document.getElementById('previewName').textContent = name;
+    document.getElementById('previewDescription').textContent = description.length > 100 ? 
+        description.substring(0, 100) + '...' : description;
+}
+
+/**
+ * Submit form tạo danh mục đến CategoryApiController
+ * Sử dụng endpoint: POST /api/category
+ */
+async function submitCategory() {
+    console.log('📤 Bắt đầu submit danh mục đến CategoryApiController');
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const originalContent = submitBtn.innerHTML;
+    
+    try {
+        // Hiển thị trạng thái loading
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang tạo...';
+        submitBtn.disabled = true;
         
-        if (confirm('Bạn có muốn khôi phục bản nháp đã lưu không?')) {
-            document.getElementById('name').value = data.name || '';
-            document.getElementById('description').value = data.description || '';
+        // Xóa các thông báo trước đó
+        clearMessages();
+        
+        // Lấy dữ liệu từ form
+        const formData = {
+            name: document.getElementById('name').value.trim(),
+            description: document.getElementById('description').value.trim()
+        };
+        
+        console.log('📋 Dữ liệu gửi đến API:', formData);
+        
+        // Validate dữ liệu phía client
+        if (!validateFormData(formData)) {
+            throw new Error('Dữ liệu không hợp lệ');
+        }
+        
+        // Gửi request đến CategoryApiController - method store()
+        const response = await fetch('/api/category', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        console.log('📡 Response từ CategoryApiController:', response.status);
+        
+        // Xử lý response
+        const data = await response.json();
+        console.log('📋 Response data:', data);
+        
+        if (response.ok && data.message) {
+            // Thành công
+            console.log('✅ Tạo danh mục thành công');
             
-            if (data.icon) {
-                document.querySelector(`[data-icon="${data.icon}"]`)?.click();
-            }
+            showSuccess(data.message);
             
-            if (data.color) {
-                document.querySelector(`[data-color="${data.color}"]`)?.click();
-            }
+            // Hiển thị modal xác nhận
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: 'Danh mục đã được tạo thành công',
+                showCancelButton: true,
+                confirmButtonText: 'Về danh sách',
+                cancelButtonText: 'Tạo danh mục khác',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Chuyển về danh sách
+                    window.location.href = '/category/list';
+                } else {
+                    // Reset form để tạo danh mục mới
+                    resetForm();
+                }
+            });
             
-            updatePreview();
+        } else {
+            // Có lỗi từ API
+            throw new Error(data.message || 'Không thể tạo danh mục');
+        }
+        
+    } catch (error) {
+        console.error('❌ Lỗi khi tạo danh mục:', error);
+        showError(error.message);
+        
+    } finally {
+        // Khôi phục nút submit
+        submitBtn.innerHTML = originalContent;
+        submitBtn.disabled = false;
+    }
+}
+
+/**
+ * Validate dữ liệu form phía client
+ * @param {Object} data - Dữ liệu form
+ * @returns {boolean} - True nếu hợp lệ
+ */
+function validateFormData(data) {
+    console.log('🔍 Validate dữ liệu form:', data);
+    
+    if (!data.name || data.name.length < 3) {
+        showFieldError('name', 'Tên danh mục phải có ít nhất 3 ký tự');
+        return false;
+    }
+    
+    if (data.name.length > 100) {
+        showFieldError('name', 'Tên danh mục không được vượt quá 100 ký tự');
+        return false;
+    }
+    
+    if (data.description && data.description.length > 1000) {
+        showFieldError('description', 'Mô tả không được vượt quá 1000 ký tự');
+        return false;
+    }
+    
+    console.log('✅ Dữ liệu form hợp lệ');
+    return true;
+}
+
+/**
+ * Hiển thị lỗi cho field cụ thể
+ * @param {string} fieldName - Tên field
+ * @param {string} message - Thông báo lỗi
+ */
+function showFieldError(fieldName, message) {
+    const field = document.getElementById(fieldName);
+    if (field) {
+        field.classList.add('is-invalid');
+        
+        const errorElement = document.getElementById(fieldName + 'Error');
+        if (errorElement) {
+            errorElement.textContent = message;
         }
     }
-});
+}
 
-// Clear draft on successful submit
-document.getElementById('categoryForm').addEventListener('submit', () => {
-    localStorage.removeItem('categoryDraft');
-});
+/**
+ * Hiển thị thông báo thành công
+ * @param {string} message - Thông báo
+ */
+function showSuccess(message) {
+    const container = document.getElementById('successContainer');
+    const messageElement = document.getElementById('successMessage');
+    
+    messageElement.textContent = message;
+    container.style.display = 'block';
+    
+    // Scroll đến thông báo
+    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
 
-<?php if (isset($_SESSION['old_data'])): ?>
-// Clear old data from session
-<?php unset($_SESSION['old_data']); ?>
-<?php endif; ?>
+/**
+ * Hiển thị thông báo lỗi
+ * @param {string} message - Thông báo lỗi
+ */
+function showError(message) {
+    const container = document.getElementById('errorContainer');
+    const messageElement = document.getElementById('errorMessage');
+    
+    messageElement.textContent = message;
+    container.style.display = 'block';
+    
+    // Scroll đến thông báo lỗi
+    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/**
+ * Xóa tất cả thông báo
+ */
+function clearMessages() {
+    document.getElementById('errorContainer').style.display = 'none';
+    document.getElementById('successContainer').style.display = 'none';
+    
+    // Xóa lỗi validation
+    document.querySelectorAll('.is-invalid').forEach(field => {
+        field.classList.remove('is-invalid');
+    });
+    
+    document.querySelectorAll('.invalid-feedback').forEach(feedback => {
+        feedback.textContent = '';
+    });
+}
+
+/**
+ * Reset form về trạng thái ban đầu
+ */
+function resetForm() {
+    console.log('🔄 Reset form');
+    
+    document.getElementById('categoryForm').reset();
+    clearMessages();
+    updatePreview();
+    
+    // Focus vào field đầu tiên
+    document.getElementById('name').focus();
+}
+
+console.log('🎉 Category Create API Script loaded successfully');
+console.log(`👤 Current user: MHoang287`);
+console.log(`📅 Current time: 2025-06-13 03:15:13`);
 </script>
 
 <?php include_once 'app/views/shares/footer.php'; ?>
