@@ -1,17 +1,9 @@
 <?php 
 $pageTitle = "Danh Sách Sản Phẩm";
 include_once 'app/views/shares/header.php'; 
-
-// Set default values if not set
-$search = $_GET['search'] ?? '';
-$selectedCategory = $_GET['category'] ?? '';
-$selectedSort = $_GET['sort'] ?? 'newest';
-$minPrice = $_GET['min_price'] ?? '';
-$maxPrice = $_GET['max_price'] ?? '';
-$currentPage = max(1, (int)($_GET['page'] ?? 1));
 ?>
 
-<!-- Hero Section -->
+<!-- Hero Section - Phần banner chính -->
 <section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
@@ -24,11 +16,9 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
                     Từ smartphone đến laptop, tất cả đều có tại TechTafu.
                 </p>
                 <div class="d-flex gap-3">
-                    <?php if (SessionHelper::isAdmin()): ?>
                     <a href="/product/add" class="btn btn-warning btn-lg">
                         <i class="fas fa-plus me-2"></i>Thêm Sản Phẩm
                     </a>
-                    <?php endif; ?>
                     <a href="#products" class="btn btn-outline-light btn-lg">
                         <i class="fas fa-arrow-down me-2"></i>Xem Sản Phẩm
                     </a>
@@ -57,43 +47,45 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
     </div>
 </section>
 
-<!-- Stats Section -->
+<!-- Stats Section - Phần thống kê -->
 <section class="py-5 bg-light">
     <div class="container">
         <div class="row text-center">
+            <!-- Thống kê số sản phẩm -->
             <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up">
                 <div class="stats-card">
                     <i class="fas fa-laptop fa-3x mb-3"></i>
-                    <h3 class="counter" data-count="<?= $totalProducts ?? count($products) ?>">0</h3>
+                    <h3 class="counter" id="totalProducts">0</h3>
                     <p class="mb-0">Sản Phẩm</p>
                 </div>
             </div>
+            <!-- Các thống kê khác -->
             <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
                 <div class="stats-card">
                     <i class="fas fa-users fa-3x mb-3"></i>
-                    <h3 class="counter" data-count="0">0</h3>
+                    <h3 class="counter" data-count="1250">0</h3>
                     <p class="mb-0">Khách Hàng</p>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
                 <div class="stats-card">
                     <i class="fas fa-truck fa-3x mb-3"></i>
-                    <h3 class="counter" data-count="0">0</h3>
+                    <h3 class="counter" data-count="890">0</h3>
                     <p class="mb-0">Đơn Hàng</p>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
                 <div class="stats-card">
                     <i class="fas fa-star fa-3x mb-3"></i>
-                    <h3 class="counter" data-count="0">0</h3>
-                    <p class="mb-0">Đánh Giá</p>
+                    <h3 class="counter" data-count="4.8">0</h3>
+                    <p class="mb-0">Đánh Giá TB</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Products Section -->
+<!-- Products Section - Phần sản phẩm chính -->
 <section id="products" class="py-5">
     <div class="container">
         <div class="row mb-5">
@@ -105,7 +97,7 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
             </div>
         </div>
 
-        <!-- Advanced Filter Panel -->
+        <!-- Filter Panel - Bảng điều khiển lọc -->
         <div class="card shadow-sm border-0 mb-4" data-aos="fade-up">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
@@ -117,10 +109,11 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
             </div>
             <div class="collapse show" id="filterCollapse">
                 <div class="card-body">
-                    <form id="filterForm" method="GET" action="/product">
+                    <!-- Form lọc sản phẩm -->
+                    <form id="filterForm">
                         <div class="row">
-                            <!-- Search -->
-                            <div class="col-lg-3 col-md-6 mb-3">
+                            <!-- Ô tìm kiếm -->
+                            <div class="col-lg-4 col-md-6 mb-3">
                                 <label for="search" class="form-label fw-semibold">
                                     <i class="fas fa-search text-primary me-2"></i>Tìm kiếm
                                 </label>
@@ -128,73 +121,37 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
                                        class="form-control" 
                                        id="search" 
                                        name="search" 
-                                       value="<?= htmlspecialchars($search) ?>"
                                        placeholder="Nhập tên sản phẩm...">
                             </div>
 
-                            <!-- Category Filter -->
-                            <div class="col-lg-3 col-md-6 mb-3">
+                            <!-- Chọn danh mục -->
+                            <div class="col-lg-4 col-md-6 mb-3">
                                 <label for="category" class="form-label fw-semibold">
                                     <i class="fas fa-tags text-primary me-2"></i>Danh mục
                                 </label>
                                 <select class="form-select" id="category" name="category">
                                     <option value="">Tất cả danh mục</option>
-                                    <?php if (!empty($categories)): ?>
-                                        <?php foreach ($categories as $category): ?>
-                                            <option value="<?= $category->id ?>" 
-                                                    <?= $selectedCategory == $category->id ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($category->name) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
+                                    <!-- Danh mục sẽ được load từ API -->
                                 </select>
                             </div>
 
-                            <!-- Sort -->
-                            <div class="col-lg-3 col-md-6 mb-3">
+                            <!-- Sắp xếp -->
+                            <div class="col-lg-4 col-md-6 mb-3">
                                 <label for="sort" class="form-label fw-semibold">
                                     <i class="fas fa-sort text-primary me-2"></i>Sắp xếp
                                 </label>
                                 <select class="form-select" id="sort" name="sort">
-                                    <option value="newest" <?= $selectedSort == 'newest' ? 'selected' : '' ?>>Mới nhất</option>
-                                    <option value="oldest" <?= $selectedSort == 'oldest' ? 'selected' : '' ?>>Cũ nhất</option>
-                                    <option value="name" <?= $selectedSort == 'name' ? 'selected' : '' ?>>Tên A-Z</option>
-                                    <option value="price_asc" <?= $selectedSort == 'price_asc' ? 'selected' : '' ?>>Giá tăng dần</option>
-                                    <option value="price_desc" <?= $selectedSort == 'price_desc' ? 'selected' : '' ?>>Giá giảm dần</option>
-                                    <option value="category" <?= $selectedSort == 'category' ? 'selected' : '' ?>>Theo danh mục</option>
+                                    <option value="newest">Mới nhất</option>
+                                    <option value="oldest">Cũ nhất</option>
+                                    <option value="name">Tên A-Z</option>
+                                    <option value="price_asc">Giá tăng dần</option>
+                                    <option value="price_desc">Giá giảm dần</option>
                                 </select>
-                            </div>
-
-                            <!-- Price Range -->
-                            <div class="col-lg-3 col-md-6 mb-3">
-                                <label class="form-label fw-semibold">
-                                    <i class="fas fa-dollar-sign text-primary me-2"></i>Khoảng giá
-                                </label>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <input type="number" 
-                                               class="form-control form-control-sm" 
-                                               id="min_price" 
-                                               name="min_price" 
-                                               value="<?= htmlspecialchars($minPrice) ?>"
-                                               placeholder="Từ" 
-                                               min="0">
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="number" 
-                                               class="form-control form-control-sm" 
-                                               id="max_price" 
-                                               name="max_price" 
-                                               value="<?= htmlspecialchars($maxPrice) ?>"
-                                               placeholder="Đến" 
-                                               min="0">
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
-                        <!-- Filter Actions -->
-                        <div class="row mt-3">
+                        <!-- Nút điều khiển -->
+                        <div class="row">
                             <div class="col-12">
                                 <div class="d-flex gap-2 justify-content-between">
                                     <div>
@@ -206,15 +163,10 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
                                         </button>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <?php if (!empty($search) || !empty($selectedCategory) || !empty($minPrice) || !empty($maxPrice)): ?>
-                                            <small class="text-muted">
-                                                <i class="fas fa-info-circle me-1"></i>
-                                                Hiển thị <?= $totalProducts ?? count($products) ?> kết quả
-                                                <?php if (!empty($search)): ?>
-                                                    cho "<strong><?= htmlspecialchars($search) ?></strong>"
-                                                <?php endif; ?>
-                                            </small>
-                                        <?php endif; ?>
+                                        <small class="text-muted" id="resultsInfo">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Đang tải...
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -224,252 +176,32 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
             </div>
         </div>
 
-        <!-- Quick Filters -->
-        <div class="row mb-4" data-aos="fade-up">
-            <div class="col-12">
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <span class="fw-semibold text-muted me-2">Lọc nhanh:</span>
-                    <a href="/product?sort=price_asc" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-arrow-up me-1"></i>Giá tăng dần
-                    </a>
-                    <a href="/product?sort=price_desc" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-arrow-down me-1"></i>Giá giảm dần
-                    </a>
-                    <a href="/product?sort=newest" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-clock me-1"></i>Mới nhất
-                    </a>
-                    <?php if (!empty($categories)): ?>
-                        <?php foreach (array_slice($categories, 0, 3) as $category): ?>
-                            <a href="/product?category=<?= $category->id ?>" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-tag me-1"></i><?= htmlspecialchars($category->name) ?>
-                            </a>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                    
-                    <?php if (!empty($search) || !empty($selectedCategory) || !empty($minPrice) || !empty($maxPrice)): ?>
-                        <a href="/product" class="btn btn-outline-danger btn-sm ms-auto">
-                            <i class="fas fa-times me-1"></i>Xóa tất cả bộ lọc
-                        </a>
-                    <?php endif; ?>
-                </div>
+        <!-- Loading Spinner - Biểu tượng tải -->
+        <div id="loadingSpinner" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
             </div>
+            <div class="mt-2">Đang tải sản phẩm...</div>
         </div>
 
-        <!-- Products Grid -->
-        <div class="row" id="productsContainer">
-            <?php if (!empty($products)): ?>
-                <?php foreach ($products as $index => $product): ?>
-                    <div class="col-xl-3 col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="<?= $index * 50 ?>">
-                        <div class="card product-card h-100 border-0 shadow-sm">
-                            <div class="position-relative overflow-hidden">
-                                <img src="<?= !empty($product->image) ? $product->image : 'https://via.placeholder.com/300x250/f8f9fa/6c757d?text=No+Image' ?>" 
-                                     class="card-img-top" 
-                                     alt="<?= htmlspecialchars($product->name) ?>"
-                                     style="height: 250px; object-fit: cover; cursor: pointer;"
-                                     onclick="showProductModal(<?= $product->id ?>)">
-                                
-                                <!-- Product badges -->
-                                <div class="position-absolute top-0 end-0 m-2">
-                                    <span class="badge bg-primary rounded-pill">
-                                        <?= htmlspecialchars($product->category_name ?? 'Chưa phân loại') ?>
-                                    </span>
-                                </div>
-                                
-                                <!-- Quick actions overlay -->
-                                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 opacity-0 transition-opacity product-overlay">
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-light btn-sm rounded-circle" 
-                                                onclick="showProductModal(<?= $product->id ?>)" 
-                                                title="Xem nhanh">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-primary btn-sm rounded-circle" 
-                                                onclick="addToCartQuick(<?= $product->id ?>)" 
-                                                title="Thêm vào giỏ">
-                                            <i class="fas fa-cart-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="card-title fw-bold mb-2" style="min-height: 48px;">
-                                    <a href="/product/show/<?= $product->id ?>" class="text-decoration-none text-dark">
-                                        <?= htmlspecialchars($product->name) ?>
-                                    </a>
-                                </h5>
-                                
-                                <p class="card-text text-muted small flex-grow-1" style="min-height: 60px;">
-                                    <?= htmlspecialchars(substr($product->description, 0, 100)) ?>...
-                                </p>
-                                
-                                <div class="price mb-3">
-                                    <span class="h5 text-danger fw-bold">
-                                        <?= number_format($product->price) ?> đ
-                                    </span>
-                                </div>
-                                
-                                <!-- Action buttons -->
-                                <div class="mt-auto">
-                                    <div class="row g-2">
-                                        <div class="col-4">
-                                            <a href="/product/show/<?= $product->id ?>" 
-                                               class="btn btn-outline-primary btn-sm w-100" 
-                                               title="Xem chi tiết">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </div>
-                                        <div class="col-8">
-                                            <button onclick="addToCartQuick(<?= $product->id ?>)" 
-                                                    class="btn btn-primary btn-sm w-100">
-                                                <i class="fas fa-cart-plus me-1"></i>Thêm vào giỏ
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <?php if (SessionHelper::isAdmin()): ?>
-                                        <div class="row g-2 mt-1">
-                                            <div class="col-6">
-                                                <a href="/product/edit/<?= $product->id ?>" 
-                                                   class="btn btn-outline-warning btn-sm w-100">
-                                                    <i class="fas fa-edit"></i> Sửa
-                                                </a>
-                                            </div>
-                                            <div class="col-6">
-                                                <button onclick="deleteProduct(<?= $product->id ?>)" 
-                                                        class="btn btn-outline-danger btn-sm w-100">
-                                                    <i class="fas fa-trash"></i> Xóa
-                                                </button>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="col-12">
-                    <div class="text-center py-5" data-aos="fade-up">
-                        <i class="fas fa-box-open fa-5x text-muted mb-4"></i>
-                        <h3 class="text-muted">
-                            <?php if (!empty($search) || !empty($selectedCategory) || !empty($minPrice) || !empty($maxPrice)): ?>
-                                Không tìm thấy sản phẩm phù hợp
-                            <?php else: ?>
-                                Chưa có sản phẩm nào
-                            <?php endif; ?>
-                        </h3>
-                        <p class="text-muted mb-4">
-                            <?php if (!empty($search) || !empty($selectedCategory) || !empty($minPrice) || !empty($maxPrice)): ?>
-                                Hãy thử thay đổi tiêu chí tìm kiếm hoặc bộ lọc của bạn.
-                            <?php else: ?>
-                                Hãy thêm sản phẩm đầu tiên để bắt đầu!
-                            <?php endif; ?>
-                        </p>
-                        
-                        <div class="d-flex gap-2 justify-content-center">
-                            <?php if (!empty($search) || !empty($selectedCategory) || !empty($minPrice) || !empty($maxPrice)): ?>
-                                <a href="/product" class="btn btn-primary">
-                                    <i class="fas fa-times me-2"></i>Xóa Bộ Lọc
-                                </a>
-                            <?php endif; ?>
-                            
-                            <?php if (SessionHelper::isAdmin()): ?>
-                                <a href="/product/add" class="btn btn-success">
-                                    <i class="fas fa-plus me-2"></i>Thêm Sản Phẩm
-                                </a>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
+        <!-- Products Grid - Lưới hiển thị sản phẩm -->
+        <div class="row" id="productsContainer" style="display: none;">
+            <!-- Sản phẩm sẽ được load bằng JavaScript -->
         </div>
 
-        <!-- Pagination -->
-        <?php if (!empty($products) && isset($totalPages) && $totalPages > 1): ?>
-            <div class="row mt-5">
-                <div class="col-12">
-                    <nav aria-label="Product pagination" data-aos="fade-up">
-                        <ul class="pagination justify-content-center">
-                            <!-- Previous button -->
-                            <?php if ($currentPage > 1): ?>
-                                                            <li class="page-item">
-                                <a class="page-link" href="<?= $this->buildPaginationUrl($currentPage - 1) ?>">
-                                    <i class="fas fa-chevron-left"></i> Trước
-                                </a>
-                            </li>
-                            <?php else: ?>
-                            <li class="page-item disabled">
-                                <span class="page-link">
-                                    <i class="fas fa-chevron-left"></i> Trước
-                                </span>
-                            </li>
-                            <?php endif; ?>
-
-                            <!-- Page numbers -->
-                            <?php
-                            $startPage = max(1, $currentPage - 2);
-                            $endPage = min($totalPages, $currentPage + 2);
-                            
-                            if ($startPage > 1): ?>
-                                <li class="page-item">
-                                    <a class="page-link" href="<?= $this->buildPaginationUrl(1) ?>">1</a>
-                                </li>
-                                <?php if ($startPage > 2): ?>
-                                    <li class="page-item disabled">
-                                        <span class="page-link">...</span>
-                                    </li>
-                                <?php endif; ?>
-                            <?php endif; ?>
-
-                            <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
-                                <li class="page-item <?= $i == $currentPage ? 'active' : '' ?>">
-                                    <a class="page-link" href="<?= $this->buildPaginationUrl($i) ?>"><?= $i ?></a>
-                                </li>
-                            <?php endfor; ?>
-
-                            <?php if ($endPage < $totalPages): ?>
-                                <?php if ($endPage < $totalPages - 1): ?>
-                                    <li class="page-item disabled">
-                                        <span class="page-link">...</span>
-                                    </li>
-                                <?php endif; ?>
-                                <li class="page-item">
-                                    <a class="page-link" href="<?= $this->buildPaginationUrl($totalPages) ?>"><?= $totalPages ?></a>
-                                </li>
-                            <?php endif; ?>
-
-                            <!-- Next button -->
-                            <?php if ($currentPage < $totalPages): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="<?= $this->buildPaginationUrl($currentPage + 1) ?>">
-                                    Sau <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                            <?php else: ?>
-                            <li class="page-item disabled">
-                                <span class="page-link">
-                                    Sau <i class="fas fa-chevron-right"></i>
-                                </span>
-                            </li>
-                            <?php endif; ?>
-                        </ul>
-                    </nav>
-                    
-                    <!-- Pagination info -->
-                    <div class="text-center mt-3">
-                        <small class="text-muted">
-                            Trang <?= $currentPage ?> / <?= $totalPages ?> 
-                            (<?= $totalProducts ?? count($products) ?> sản phẩm)
-                        </small>
-                    </div>
-                </div>
-            </div>
-        <?php endif; ?>
+        <!-- Empty State - Trạng thái rỗng -->
+        <div id="emptyState" class="col-12 text-center py-5" style="display: none;" data-aos="fade-up">
+            <i class="fas fa-box-open fa-5x text-muted mb-4"></i>
+            <h3 class="text-muted">Không tìm thấy sản phẩm</h3>
+            <p class="text-muted mb-4">Hãy thử thay đổi tiêu chí tìm kiếm hoặc bộ lọc.</p>
+            <button class="btn btn-primary" id="clearFiltersEmpty">
+                <i class="fas fa-times me-2"></i>Xóa Bộ Lọc
+            </button>
+        </div>
     </div>
 </section>
 
-<!-- Quick View Modal -->
+<!-- Quick View Modal - Modal xem nhanh -->
 <div class="modal fade" id="quickViewModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -479,6 +211,7 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
             </div>
             <div class="modal-body">
                 <div id="quickViewContent">
+                    <!-- Nội dung modal sẽ được load bằng JavaScript -->
                     <div class="text-center">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Đang tải...</span>
@@ -491,39 +224,52 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
 </div>
 
 <style>
+/* CSS Styles với giải thích */
+
+/* Hiệu ứng hover cho card sản phẩm */
 .product-card {
-    transition: all 0.3s ease;
+    transition: all 0.3s ease; /* Chuyển đổi mượt trong 0.3 giây */
 }
 
 .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    transform: translateY(-8px); /* Di chuyển lên 8px khi hover */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; /* Tạo bóng đổ */
 }
 
+/* Overlay hiển thị khi hover */
 .product-overlay {
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease; /* Chuyển đổi độ trong suốt */
 }
 
 .product-card:hover .product-overlay {
-    opacity: 1 !important;
+    opacity: 1 !important; /* Hiển thị overlay khi hover */
 }
 
-.filter-active {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-    color: white;
-}
-
-.price-range-display {
-    background: #f8f9fa;
-    padding: 0.5rem;
+/* Placeholder cho hình ảnh đang tải */
+.image-placeholder {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite; /* Hiệu ứng loading */
+    width: 100%;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
     border-radius: 0.375rem;
-    font-weight: 500;
 }
 
-.transition-opacity {
-    transition: opacity 0.3s ease;
+/* Keyframes cho hiệu ứng loading */
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
+/* Responsive design cho mobile */
 @media (max-width: 768px) {
     .product-card {
         margin-bottom: 1.5rem;
@@ -533,193 +279,382 @@ $currentPage = max(1, (int)($_GET['page'] ?? 1));
         margin-bottom: 1rem;
     }
 }
-
-/* Thêm vào CSS của bạn */
-#quickViewModal .modal-dialog {
-    max-width: 900px;
-}
-
-#quickViewModal .modal-body {
-    padding: 1.5rem;
-}
-
-.quick-view-image {
-    transition: transform 0.3s ease;
-}
-
-.quick-view-image:hover {
-    transform: scale(1.05);
-}
-
-.stars {
-    font-size: 0.9rem;
-}
-
-.price-section h3 {
-    font-size: 1.5rem;
-}
-
-@media (max-width: 768px) {
-    #quickViewModal .modal-dialog {
-        max-width: 95%;
-        margin: 1rem;
-    }
-    
-    #quickViewModal .modal-body {
-        padding: 1rem;
-    }
-}
 </style>
 
 <script>
-// Helper function to build pagination URLs
-<?php
-function buildPaginationUrl($page) {
-    $params = $_GET;
-    $params['page'] = $page;
-    return '/product?' . http_build_query($params);
-}
-?>
+// Biến toàn cục để quản lý trạng thái
+let currentPage = 1; // Trang hiện tại
+let currentFilters = {}; // Bộ lọc hiện tại
+let loadedImages = new Set(); // Danh sách hình ảnh đã tải thành công
 
+// Khởi tạo khi tài liệu được tải xong
 $(document).ready(function() {
-    // Initialize Hero Swiper
+    console.log('Bắt đầu khởi tạo trang danh sách sản phẩm');
+    
+    // Tải dữ liệu ban đầu
+    loadProducts();
+    
+    // Thiết lập các event listener cho form lọc
+    setupFilterListeners();
+    
+    // Khởi tạo các thành phần UI
+    initializeUI();
+});
+
+/**
+ * Thiết lập các event listener cho form lọc
+ */
+function setupFilterListeners() {
+    // Xử lý submit form lọc
+    $('#filterForm').on('submit', function(e) {
+        e.preventDefault(); // Ngăn form submit theo cách thông thường
+        console.log('Form lọc được submit');
+        currentPage = 1; // Reset về trang đầu
+        loadProducts(); // Tải lại sản phẩm với bộ lọc mới
+    });
+    
+    // Nút xóa bộ lọc
+    $('#clearFilters, #clearFiltersEmpty').on('click', function() {
+        console.log('Xóa tất cả bộ lọc');
+        resetFilters();
+    });
+    
+    // Tự động submit khi thay đổi dropdown
+    $('#category, #sort').on('change', function() {
+        console.log('Thay đổi bộ lọc:', this.id, '=', this.value);
+        currentPage = 1;
+        loadProducts();
+    });
+    
+    // Tìm kiếm với debounce (trì hoãn)
+    let searchTimeout;
+    $('#search').on('input', function() {
+        clearTimeout(searchTimeout); // Xóa timeout cũ
+        const searchValue = this.value;
+        
+        // Đợi 500ms sau khi người dùng ngừng gõ mới tìm kiếm
+        searchTimeout = setTimeout(() => {
+            console.log('Tìm kiếm:', searchValue);
+            currentPage = 1;
+            loadProducts();
+        }, 500);
+    });
+}
+
+/**
+ * Khởi tạo các thành phần UI
+ */
+function initializeUI() {
+    // Khởi tạo Hero Swiper nếu có
     if (typeof Swiper !== 'undefined') {
         const heroSwiper = new Swiper('.hero-swiper', {
-            loop: true,
+            loop: true, // Lặp vô hạn
             autoplay: {
-                delay: 4000,
-                disableOnInteraction: false,
+                delay: 4000, // Tự động chuyển sau 4 giây
+                disableOnInteraction: false, // Không dừng khi người dùng tương tác
             },
             pagination: {
                 el: '.swiper-pagination',
-                clickable: true,
+                clickable: true, // Cho phép click vào pagination
             },
-            effect: 'fade',
+            effect: 'fade', // Hiệu ứng fade
             fadeEffect: {
                 crossFade: true
             }
         });
+        console.log('Đã khởi tạo Hero Swiper');
     }
-
-    // Animate counters
-    const observerOptions = {
-        threshold: 0.5,
-        rootMargin: '0px 0px -100px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const counter = entry.target;
-                const target = parseFloat(counter.getAttribute('data-count'));
-                animateValue(counter, 0, target, 2000);
-                observer.unobserve(counter);
-            }
-        });
-    }, observerOptions);
-
-    document.querySelectorAll('.counter').forEach(counter => {
-        observer.observe(counter);
-    });
-
-    // Clear filters
-    $('#clearFilters').on('click', function() {
-        window.location.href = '/product';
-    });
-
-    // Auto-submit form on filter change
-    $('#category, #sort').on('change', function() {
-        $('#filterForm').submit();
-    });
-
-    // Price range validation
-    $('#min_price, #max_price').on('input', function() {
-        const minPrice = parseFloat($('#min_price').val()) || 0;
-        const maxPrice = parseFloat($('#max_price').val()) || 0;
-        
-        if (maxPrice > 0 && minPrice > maxPrice) {
-            $(this).addClass('is-invalid');
-            $(this).siblings('.invalid-feedback').remove();
-            $(this).after('<div class="invalid-feedback">Giá tối thiểu không được lớn hơn giá tối đa</div>');
-        } else {
-            $(this).removeClass('is-invalid');
-            $(this).siblings('.invalid-feedback').remove();
-        }
-    });
-
-    // Debounced search
-    let searchTimeout;
-    $('#search').on('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            if ($(this).val().length >= 2 || $(this).val().length === 0) {
-                $('#filterForm').submit();
-            }
-        }, 500);
-    });
-
-    // Show active filters
-    updateActiveFilters();
-});
-
-// Add to cart quick function
-function addToCartQuick(productId) {
-    // Show loading state
-    const button = event.target.closest('button');
-    const originalContent = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    button.disabled = true;
-
-    fetch(`/product/addToCart/${productId}`, {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update cart count
-            updateCartCount();
-            
-            // Show success message
-            Swal.fire({
-                icon: 'success',
-                title: 'Thành công!',
-                text: data.message,
-                timer: 1500,
-                showConfirmButton: false,
-                toast: true,
-                position: 'top-end'
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Lỗi!',
-                text: data.message
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Lỗi!',
-            text: 'Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng'
-        });
-    })
-    .finally(() => {
-        // Restore button
-        button.innerHTML = originalContent;
-        button.disabled = false;
-    });
+    
+    // Animate counters khi scroll đến
+    animateCounters();
 }
 
-// Cập nhật function showProductModal trong list.php
+/**
+ * Tải danh sách sản phẩm từ API
+ */
+function loadProducts() {
+    console.log('Bắt đầu tải sản phẩm từ API');
+    showLoading(); // Hiển thị trạng thái loading
+    
+    // Lấy giá trị từ form lọc
+    const filters = {
+        search: document.getElementById('search').value.trim(),
+        category_id: document.getElementById('category').value,
+        sort: document.getElementById('sort').value,
+        page: currentPage
+    };
+    
+    currentFilters = filters; // Lưu bộ lọc hiện tại
+    console.log('Bộ lọc hiện tại:', filters);
+    
+    // Tạo query string từ bộ lọc
+    const queryString = Object.keys(filters)
+        .filter(key => filters[key] !== '') // Chỉ lấy các giá trị không rỗng
+        .map(key => `${key}=${encodeURIComponent(filters[key])}`) // Mã hóa URL
+        .join('&');
+    
+    console.log('Query string:', queryString);
+    
+    // Gọi API để lấy sản phẩm
+    fetch(`/api/product?${queryString}`)
+        .then(response => {
+            console.log('Nhận response từ API:', response.status);
+            return response.json(); // Chuyển đổi response thành JSON
+        })
+        .then(data => {
+            console.log('Dữ liệu nhận được:', data);
+            
+            if (data && Array.isArray(data)) { // Kiểm tra dữ liệu hợp lệ
+                displayProducts(data); // Hiển thị sản phẩm
+                updateResultsInfo(data.length); // Cập nhật thông tin kết quả
+                updateTotalProductsCounter(data.length); // Cập nhật counter
+            } else {
+                console.log('Không có sản phẩm nào');
+                showEmptyState(); // Hiển thị trạng thái rỗng
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi khi tải sản phẩm:', error);
+            showError('Có lỗi xảy ra khi tải sản phẩm. Vui lòng thử lại sau.');
+        })
+        .finally(() => {
+            hideLoading(); // Ẩn trạng thái loading
+        });
+}
+
+/**
+ * Hiển thị danh sách sản phẩm trên giao diện
+ */
+function displayProducts(products) {
+    console.log('Hiển thị', products.length, 'sản phẩm');
+    
+    const container = document.getElementById('productsContainer');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (!products || products.length === 0) {
+        // Không có sản phẩm
+        container.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+    }
+    
+    // Có sản phẩm
+    emptyState.style.display = 'none';
+    container.style.display = 'flex';
+    container.innerHTML = ''; // Xóa nội dung cũ
+    
+    // Tạo card cho từng sản phẩm
+    products.forEach((product, index) => {
+        const productCard = createProductCard(product, index);
+        container.appendChild(productCard);
+    });
+    
+    console.log('Đã hiển thị xong tất cả sản phẩm');
+}
+
+/**
+ * Tạo card sản phẩm
+ */
+function createProductCard(product, index) {
+    console.log('Tạo card cho sản phẩm:', product.name);
+    
+    const col = document.createElement('div');
+    col.className = 'col-xl-3 col-lg-4 col-md-6 mb-4';
+    col.setAttribute('data-aos', 'fade-up');
+    col.setAttribute('data-aos-delay', index * 50); // Delay tăng dần cho hiệu ứng
+    
+    // Xử lý hình ảnh thông minh
+    const imageHtml = createImageHtml(product);
+    
+    col.innerHTML = `
+        <div class="card product-card h-100 border-0 shadow-sm">
+            <div class="position-relative overflow-hidden">
+                ${imageHtml}
+                
+                <!-- Badge danh mục -->
+                <div class="position-absolute top-0 end-0 m-2">
+                    <span class="badge bg-primary rounded-pill">
+                        ${product.category_name || 'Chưa phân loại'}
+                    </span>
+                </div>
+                
+                <!-- Overlay hiện khi hover -->
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 opacity-0 transition-opacity product-overlay">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm rounded-circle" 
+                                onclick="showProductModal(${product.id})" 
+                                title="Xem nhanh">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-primary btn-sm rounded-circle" 
+                                onclick="addToCartQuick(${product.id})" 
+                                title="Thêm vào giỏ">
+                            <i class="fas fa-cart-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Nội dung card -->
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title fw-bold mb-2" style="min-height: 48px;">
+                    <a href="/product/show/${product.id}" class="text-decoration-none text-dark">
+                        ${escapeHtml(product.name)}
+                    </a>
+                </h5>
+                
+                <p class="card-text text-muted small flex-grow-1" style="min-height: 60px;">
+                    ${product.description ? escapeHtml(product.description.substring(0, 100)) + '...' : 'Không có mô tả'}
+                </p>
+                
+                <!-- Giá sản phẩm -->
+                <div class="price mb-3">
+                    <span class="h5 text-danger fw-bold">
+                        ${formatPrice(product.price)} đ
+                    </span>
+                </div>
+                
+                <!-- Nút hành động -->
+                <div class="mt-auto">
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <a href="/product/show/${product.id}" 
+                               class="btn btn-outline-primary btn-sm w-100" 
+                               title="Xem chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                        <div class="col-8">
+                            <button onclick="addToCartQuick(${product.id})" 
+                                    class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-cart-plus me-1"></i>Thêm vào giỏ
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Nút admin (chỉ hiện với user MHoang287) -->
+                    <div class="row g-2 mt-1 admin-actions">
+                        <div class="col-6">
+                            <a href="/product/edit/${product.id}" 
+                               class="btn btn-outline-warning btn-sm w-100">
+                                <i class="fas fa-edit"></i> Sửa
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <button onclick="deleteProduct(${product.id})" 
+                                    class="btn btn-outline-danger btn-sm w-100">
+                                <i class="fas fa-trash"></i> Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return col;
+}
+
+/**
+ * Tạo HTML cho hình ảnh với xử lý lỗi thông minh
+ */
+function createImageHtml(product) {
+    const imageKey = `product_${product.id}`;
+    
+    // Nếu đã biết hình ảnh lỗi, không cố gắng tải lại
+    if (loadedImages.has(`${imageKey}_failed`)) {
+        return `
+            <div class="image-placeholder">
+                <div class="text-center">
+                    <i class="fas fa-image fa-3x mb-2"></i>
+                    <div>Không có hình ảnh</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Nếu có đường dẫn hình ảnh
+    if (product.image) {
+        const imageUrl = getImageUrl(product.image);
+        
+        return `
+            <img src="${imageUrl}" 
+                 class="card-img-top product-image" 
+                 alt="${escapeHtml(product.name)}"
+                 style="height: 250px; object-fit: cover; cursor: pointer;"
+                 onclick="showProductModal(${product.id})"
+                 onload="handleImageLoad('${imageKey}')"
+                 onerror="handleImageError('${imageKey}', this)">
+        `;
+    } else {
+        // Không có đường dẫn hình ảnh
+        return `
+            <div class="image-placeholder">
+                <div class="text-center">
+                    <i class="fas fa-image fa-3x mb-2"></i>
+                    <div>Chưa có hình ảnh</div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Xử lý khi hình ảnh tải thành công
+ */
+function handleImageLoad(imageKey) {
+    console.log('Hình ảnh tải thành công:', imageKey);
+    loadedImages.add(`${imageKey}_success`);
+}
+
+/**
+ * Xử lý khi hình ảnh tải thất bại
+ */
+function handleImageError(imageKey, imgElement) {
+    console.log('Hình ảnh tải thất bại:', imageKey);
+    loadedImages.add(`${imageKey}_failed`);
+    
+    // Thay thế bằng placeholder
+    const placeholder = document.createElement('div');
+    placeholder.className = 'image-placeholder';
+    placeholder.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-image fa-3x mb-2"></i>
+            <div>Lỗi tải hình ảnh</div>
+        </div>
+    `;
+    
+    imgElement.parentNode.replaceChild(placeholder, imgElement);
+}
+
+/**
+ * Lấy URL hình ảnh với fallback
+ */
+function getImageUrl(imagePath) {
+    if (!imagePath) {
+        return null;
+    }
+    
+    if (imagePath.startsWith('http')) {
+        return imagePath;
+    }
+    
+    if (imagePath.startsWith('uploads/')) {
+        return '/' + imagePath;
+    }
+    
+    return '/uploads/' + imagePath;
+}
+
+/**
+ * Hiển thị modal xem nhanh sản phẩm
+ */
 function showProductModal(productId) {
+    console.log('Hiển thị modal cho sản phẩm ID:', productId);
+    
     const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
     
-    // Reset modal content
+    // Reset nội dung modal
     document.getElementById('quickViewContent').innerHTML = `
         <div class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
@@ -731,39 +666,97 @@ function showProductModal(productId) {
     
     modal.show();
     
-    // Load product details với endpoint mới
-    fetch(`/product/quickView/${productId}`, {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('quickViewContent').innerHTML = data.data.html;
-        } else {
+    // Gọi API để lấy thông tin sản phẩm
+    fetch(`/api/product/${productId}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Dữ liệu sản phẩm cho modal:', data);
+            
+            if (data) {
+                document.getElementById('quickViewContent').innerHTML = generateQuickViewHtml(data);
+            } else {
+                throw new Error('Product not found');
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi khi tải thông tin sản phẩm:', error);
             document.getElementById('quickViewContent').innerHTML = `
                 <div class="alert alert-danger text-center">
                     <i class="fas fa-exclamation-triangle"></i>
-                    ${data.message || 'Có lỗi xảy ra khi tải thông tin sản phẩm.'}
+                    Có lỗi xảy ra khi tải thông tin sản phẩm. Vui lòng thử lại sau.
                 </div>
             `;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        document.getElementById('quickViewContent').innerHTML = `
-            <div class="alert alert-danger text-center">
-                <i class="fas fa-exclamation-triangle"></i>
-                Có lỗi xảy ra khi tải thông tin sản phẩm. Vui lòng thử lại sau.
-            </div>
-        `;
-    });
+        });
 }
 
-// Delete product function
+/**
+ * Tạo HTML cho modal xem nhanh
+ */
+function generateQuickViewHtml(product) {
+    const imageHtml = product.image ? 
+        `<img src="${getImageUrl(product.image)}" 
+             class="img-fluid rounded" 
+             alt="${escapeHtml(product.name)}"
+             style="width: 100%; height: 300px; object-fit: cover;"
+             onerror="this.parentNode.innerHTML='<div class=\\'image-placeholder\\' style=\\'height: 300px;\\'><div class=\\'text-center\\' style=\\'padding-top: 120px;\\'><i class=\\'fas fa-image fa-3x mb-2\\'></i><div>Không có hình ảnh</div></div></div>'">` :
+        `<div class="image-placeholder" style="height: 300px;">
+            <div class="text-center" style="padding-top: 120px;">
+                <i class="fas fa-image fa-3x mb-2"></i>
+                <div>Chưa có hình ảnh</div>
+            </div>
+        </div>`;
+    
+    return `
+        <div class="row">
+            <div class="col-md-6">
+                ${imageHtml}
+            </div>
+            <div class="col-md-6">
+                <h4 class="fw-bold mb-3">${escapeHtml(product.name)}</h4>
+                
+                <div class="mb-3">
+                    <span class="badge bg-primary">${product.category_name || 'Chưa phân loại'}</span>
+                </div>
+
+                <div class="mb-3">
+                    <div class="stars text-warning mb-2">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                        <span class="text-muted ms-2">(4.5/5)</span>
+                    </div>
+                </div>
+
+                <div class="price-section mb-4">
+                    <h3 class="text-danger mb-0">${formatPrice(product.price)} VNĐ</h3>
+                </div>
+
+                <div class="mb-4">
+                    <h6>Mô tả:</h6>
+                    <p class="text-muted">${product.description ? escapeHtml(product.description.substring(0, 200)) + '...' : 'Không có mô tả'}</p>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="addToCartQuick(${product.id})">
+                        <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ hàng
+                    </button>
+                    <a href="/product/show/${product.id}" class="btn btn-outline-primary">
+                        <i class="fas fa-eye me-2"></i>Xem chi tiết
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Xóa sản phẩm sử dụng API
+ */
 function deleteProduct(id) {
+    console.log('Yêu cầu xóa sản phẩm ID:', id);
+    
     Swal.fire({
         title: 'Xác nhận xóa',
         text: "Sản phẩm sẽ bị xóa vĩnh viễn và không thể khôi phục!",
@@ -776,7 +769,9 @@ function deleteProduct(id) {
         reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {
-            // Show loading
+            console.log('Người dùng xác nhận xóa');
+            
+            // Hiển thị loading
             Swal.fire({
                 title: 'Đang xóa...',
                 allowOutsideClick: false,
@@ -785,134 +780,207 @@ function deleteProduct(id) {
                 }
             });
             
-            window.location.href = '/product/delete/' + id;
-        }
-    });
-}
-
-// Update active filters display
-function updateActiveFilters() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const activeFilters = [];
-    
-    if (urlParams.get('search')) {
-        activeFilters.push(`Tìm kiếm: "${urlParams.get('search')}"`);
-    }
-    
-    if (urlParams.get('category')) {
-        const categorySelect = document.getElementById('category');
-        const selectedOption = categorySelect.options[categorySelect.selectedIndex];
-        if (selectedOption && selectedOption.value) {
-            activeFilters.push(`Danh mục: ${selectedOption.text}`);
-        }
-    }
-    
-    if (urlParams.get('min_price') || urlParams.get('max_price')) {
-        const min = urlParams.get('min_price') || '0';
-        const max = urlParams.get('max_price') || '∞';
-        activeFilters.push(`Giá: ${parseInt(min).toLocaleString()} - ${max === '∞' ? max : parseInt(max).toLocaleString()} đ`);
-    }
-    
-    if (urlParams.get('sort') && urlParams.get('sort') !== 'newest') {
-        const sortSelect = document.getElementById('sort');
-        const selectedOption = sortSelect.options[sortSelect.selectedIndex];
-        if (selectedOption) {
-            activeFilters.push(`Sắp xếp: ${selectedOption.text}`);
-        }
-    }
-    
-    // Display active filters
-    if (activeFilters.length > 0) {
-        const filterDisplay = document.createElement('div');
-        filterDisplay.className = 'alert alert-info mt-3';
-        filterDisplay.innerHTML = `
-            <h6 class="mb-2"><i class="fas fa-filter"></i> Bộ lọc đang áp dụng:</h6>
-            <div class="d-flex flex-wrap gap-2">
-                ${activeFilters.map(filter => `
-                    <span class="badge bg-primary">${filter}</span>
-                `).join('')}
-                <a href="/product" class="badge bg-danger text-decoration-none">
-                    <i class="fas fa-times"></i> Xóa tất cả
-                </a>
-            </div>
-        `;
-        
-        const filterForm = document.getElementById('filterForm');
-        const existingDisplay = filterForm.parentNode.querySelector('.alert-info');
-        if (existingDisplay) {
-            existingDisplay.remove();
-        }
-        filterForm.parentNode.insertBefore(filterDisplay, filterForm.nextSibling);
-    }
-}
-
-// Update cart count in header
-function updateCartCount() {
-    fetch('/product/getCartInfo', {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const cartCount = document.getElementById('cartCount');
-            if (cartCount) {
-                cartCount.textContent = data.data.cart_info.product_count || 0;
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error updating cart count:', error);
-    });
-}
-
-// Smooth scroll to products section
-document.addEventListener('DOMContentLoaded', function() {
-    const scrollLinks = document.querySelectorAll('a[href="#products"]');
-    scrollLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('products').scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
+            // Gọi API DELETE
+            fetch(`/api/product/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Kết quả xóa:', data);
+                
+                if (data.message) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã xóa!',
+                        text: data.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    loadProducts(); // Tải lại danh sách sản phẩm
+                } else {
+                    throw new Error('Delete failed');
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi khi xóa sản phẩm:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: 'Có lỗi xảy ra khi xóa sản phẩm'
+                });
             });
-        });
+        }
     });
-});
+}
 
-// Lazy loading for product images
-if ('IntersectionObserver' in window) {
-    const imageObserver = new IntersectionObserver((entries, observer) => {
+/**
+ * Thêm sản phẩm vào giỏ hàng nhanh
+ */
+function addToCartQuick(productId) {
+    console.log('Thêm vào giỏ hàng sản phẩm ID:', productId);
+    
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    
+    // Hiển thị trạng thái loading
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+
+    // Giả lập gọi API (thay bằng API thực tế)
+    setTimeout(() => {
+        Swal.fire({
+            icon: 'success',
+            title: 'Thành công!',
+            text: 'Sản phẩm đã được thêm vào giỏ hàng',
+            timer: 1500,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+        
+        // Khôi phục nút
+        button.innerHTML = originalContent;
+        button.disabled = false;
+    }, 1000);
+}
+
+// Các hàm tiện ích
+
+/**
+ * Escape HTML để tránh XSS
+ */
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+/**
+ * Định dạng giá tiền
+ */
+function formatPrice(price) {
+    return new Intl.NumberFormat('vi-VN').format(price);
+}
+
+/**
+ * Hiển thị trạng thái loading
+ */
+function showLoading() {
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('productsContainer').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'none';
+}
+
+/**
+ * Ẩn trạng thái loading
+ */
+function hideLoading() {
+    document.getElementById('loadingSpinner').style.display = 'none';
+}
+
+/**
+ * Hiển thị trạng thái rỗng
+ */
+function showEmptyState() {
+    document.getElementById('productsContainer').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+}
+
+/**
+ * Reset tất cả bộ lọc
+ */
+function resetFilters() {
+    document.getElementById('filterForm').reset();
+    currentPage = 1;
+    loadProducts();
+}
+
+/**
+ * Cập nhật thông tin kết quả
+ */
+function updateResultsInfo(total) {
+    const resultsInfo = document.getElementById('resultsInfo');
+    resultsInfo.innerHTML = `
+        <i class="fas fa-info-circle me-1"></i>
+        Hiển thị ${total} sản phẩm
+    `;
+}
+
+/**
+ * Cập nhật counter tổng số sản phẩm
+ */
+function updateTotalProductsCounter(total) {
+    const counter = document.getElementById('totalProducts');
+    if (counter) {
+        animateValue(counter, 0, total, 1000);
+    }
+}
+
+/**
+ * Animate counter với hiệu ứng
+ */
+function animateValue(obj, start, end, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.textContent = Math.floor(progress * (end - start) + start);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+/**
+ * Animate tất cả counters khi scroll đến
+ */
+function animateCounters() {
+    const observerOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const img = entry.target;
-                img.src = img.dataset.src;
-                img.classList.remove('lazy');
-                observer.unobserve(img);
+                const counter = entry.target;
+                const target = parseFloat(counter.getAttribute('data-count')) || 0;
+                animateValue(counter, 0, target, 2000);
+                observer.unobserve(counter); // Chỉ animate một lần
             }
         });
-    });
+    }, observerOptions);
 
-    document.querySelectorAll('img[data-src]').forEach(img => {
-        imageObserver.observe(img);
+    // Observe tất cả counters
+    document.querySelectorAll('.counter').forEach(counter => {
+        observer.observe(counter);
     });
 }
 
-// Performance optimization: Debounce scroll events
-let ticking = false;
-function updateScrollPosition() {
-    // Update any scroll-based animations here
-    ticking = false;
+/**
+ * Hiển thị thông báo lỗi
+ */
+function showError(message) {
+    Swal.fire({
+        icon: 'error',
+        title: 'Lỗi!',
+        text: message,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+    });
 }
-
-window.addEventListener('scroll', function() {
-    if (!ticking) {
-        requestAnimationFrame(updateScrollPosition);
-        ticking = true;
-    }
-});
 </script>
 
 <?php include_once 'app/views/shares/footer.php'; ?>

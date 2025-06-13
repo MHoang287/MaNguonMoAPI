@@ -91,10 +91,10 @@
                 </div>
                 <div class="col-md-6 text-md-end">
                     <div class="payment-methods">
-                        <img src="https://via.placeholder.com/50x30/007bff/ffffff?text=VISA" alt="Visa" class="me-2 payment-icon">
-                        <img src="https://via.placeholder.com/50x30/ff6b6b/ffffff?text=MC" alt="Mastercard" class="me-2 payment-icon">
-                        <img src="https://via.placeholder.com/50x30/4ecdc4/ffffff?text=PP" alt="PayPal" class="me-2 payment-icon">
-                        <img src="https://via.placeholder.com/50x30/f39c12/ffffff?text=MB" alt="MoMo" class="payment-icon">
+                        <img src="#" alt="Visa" class="me-2 payment-icon">
+                        <img src="#" alt="Mastercard" class="me-2 payment-icon">
+                        <img src="#" alt="PayPal" class="me-2 payment-icon">
+                        <img src="#" alt="MoMo" class="payment-icon">
                     </div>
                 </div>
             </div>
