@@ -2,9 +2,10 @@
 $pageTitle = "Giỏ Hàng";
 include_once 'app/views/shares/header.php'; 
 
-// Sử dụng thông tin từ session
-$currentUser = $_SESSION['user_login'] ?? 'Guest';
-$currentDate = date('d/m/Y H:i');
+// lấy dữ liệu giỏ hàng từ tài khoản người dùng trong Model
+$cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
+$currentUser = isset($_SESSION['user']) ? $_SESSION['user']['username'] : 'Khách hàng';
+$currentDate = date('d/m/Y H:i:s');
 
 // Helper function để xử lý đường dẫn hình ảnh
 function getImageUrl($imagePath) {

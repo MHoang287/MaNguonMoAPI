@@ -206,21 +206,80 @@ class ProductApiController
     }
 
     /**
+     * Xử lý route động cho update bằng POST + _method=PUT
+     * Phải được gọi từ router chính
+     */
+    public static function handleApiRoutes()
+    {
+        $uri = $_SERVER['REQUEST_URI'];
+        $method = $_SERVER['REQUEST_METHOD'];
+        
+        // Xử lý route /api/product/{id}
+        if (preg_match('#^/api/product/(\d+)$#', $uri, $matches)) {
+            $id = (int)$matches[1];
+            $controller = new self();
+            
+            error_log("🌐 API Route: $method $uri");
+            
+            switch ($method) {
+                case 'GET':
+                    $controller->show($id);
+                    break;
+                    
+                case 'POST':
+                    // Kiểm tra _method=PUT để xử lý như update
+                    if (isset($_POST['_method']) && strtoupper($_POST['_method']) === 'PUT') {
+                        error_log("📝 Xử lý POST với _method=PUT như UPDATE");
+                        $controller->update($id);
+                    } else {
+                        error_log("❌ POST không có _method=PUT");
+                        http_response_code(405);
+                        echo json_encode(['success' => false, 'message' => 'Method Not Allowed']);
+                    }
+                    break;
+                    
+                case 'PUT':
+                    $controller->update($id);
+                    break;
+                    
+                case 'DELETE':
+                    $controller->destroy($id);
+                    break;
+                    
+                default:
+                    http_response_code(405);
+                    echo json_encode(['success' => false, 'message' => 'Method Not Allowed']);
+            }
+            exit;
+        }
+        
+        // Xử lý route /api/product/upload-image
+        if ($uri === '/api/product/upload-image' && $method === 'POST') {
+            (new self())->uploadImage();
+            exit;
+        }
+        
+        // Xử lý route /api/product (list)
+        if ($uri === '/api/product' && $method === 'GET') {
+            (new self())->index();
+            exit;
+        }
+    }
+
+    /**
      * Cập nhật sản phẩm với hỗ trợ thay đổi hình ảnh
-     * PUT /api/product/{id}
+     * PUT /api/product/{id} hoặc POST + _method=PUT
      */
     public function update($id)
     {
         try {
             error_log("📝 API: Cập nhật sản phẩm ID: " . $id);
             
-            // Validate ID
             if (!is_numeric($id) || $id <= 0) {
                 $this->sendErrorResponse('ID sản phẩm không hợp lệ', 400);
                 return;
             }
             
-            // Kiểm tra sản phẩm có tồn tại không
             $existingProduct = $this->productModel->getProductById($id);
             if (!$existingProduct) {
                 error_log("❌ API: Sản phẩm không tồn tại ID: " . $id);
@@ -228,23 +287,26 @@ class ProductApiController
                 return;
             }
             
-            // Lấy dữ liệu từ request (có thể là JSON hoặc form-data)
+            // Lấy dữ liệu từ $_POST (form-data) hoặc JSON body
             $data = $this->getRequestData();
+            
+            error_log("📊 Dữ liệu nhận được: " . json_encode($data));
+            error_log("📁 Files nhận được: " . json_encode($_FILES));
             
             // Validate dữ liệu
             $validationResult = $this->validateProductData($data);
             if ($validationResult !== true) {
+                error_log("❌ Validation failed: " . json_encode($validationResult));
                 $this->sendErrorResponse('Dữ liệu không hợp lệ', 400, $validationResult);
                 return;
             }
             
-            // Xử lý hình ảnh mới nếu có
+            // Xử lý hình ảnh
             $imagePath = $existingProduct->image; // Giữ hình ảnh cũ mặc định
             
             if (!empty($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 error_log("📸 API: Có hình ảnh mới được upload");
                 
-                // Upload hình ảnh mới
                 $uploadResult = $this->handleImageUpload($_FILES['image']);
                 
                 if ($uploadResult['success']) {
@@ -713,19 +775,23 @@ class ProductApiController
         $errors = [];
         
         // Validate tên sản phẩm
-        if (empty($data['name'])) {
+        if (empty($data['name']) || trim($data['name']) === '') {
             $errors['name'] = 'Tên sản phẩm không được để trống';
-        } elseif (strlen($data['name']) < 3) {
+        } elseif (mb_strlen(trim($data['name'])) < 3) {
             $errors['name'] = 'Tên sản phẩm phải có ít nhất 3 ký tự';
-        } elseif (strlen($data['name']) > 255) {
+        } elseif (mb_strlen($data['name']) > 255) {
             $errors['name'] = 'Tên sản phẩm không được vượt quá 255 ký tự';
         }
         
         // Validate mô tả
-        if (empty($data['description'])) {
+        if (empty($data['description']) || trim($data['description']) === '') {
             $errors['description'] = 'Mô tả không được để trống';
-        } elseif (strlen($data['description']) < 10) {
-            $errors['description'] = 'Mô tả phải có ít nhất 10 ký tự';
+        } else {
+            // Loại bỏ dấu cách, dấu chấm, phẩy, ký tự đặc biệt để kiểm tra độ dài thực sự
+            $descContent = preg_replace('/[\s\.\,\!\?\-\_\(\)\[\]\{\}\:\;\'\"\`\/\\\\]/u', '', $data['description']);
+            if (mb_strlen($descContent) < 10) {
+                $errors['description'] = 'Mô tả phải có ít nhất 10 ký tự thực sự (không tính ký tự đặc biệt/dấu cách)';
+            }
         }
         
         // Validate giá

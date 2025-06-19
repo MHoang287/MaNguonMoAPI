@@ -439,7 +439,7 @@ function createActionButtons(category) {
     shareBtn.onclick = () => shareCategory(category);
     container.appendChild(shareBtn);
     
-    // Nút admin (chỉ cho user MHoang287)
+    // Nút admin (chỉ cho user)
     if (isAdmin()) {
         const editBtn = document.createElement('a');
         editBtn.className = 'btn btn-warning btn-lg';

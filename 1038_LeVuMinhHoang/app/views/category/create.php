@@ -548,7 +548,7 @@ function resetForm() {
 }
 
 console.log('🎉 Category Create API Script loaded successfully');
-console.log(`👤 Current user: MHoang287`);
+console.log(`👤 Current user:`);
 console.log(`📅 Current time: 2025-06-13 03:15:13`);
 </script>
 
