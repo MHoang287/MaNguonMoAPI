@@ -1,6 +1,7 @@
 <?php
 require_once('app/config/database.php');
 require_once('app/models/AccountModel.php');
+require_once('app/utils/JWTHandler.php');
 
 /**
  * Controller quản lý tài khoản người dùng
@@ -10,6 +11,7 @@ class AccountController {
     private $accountModel;
     private $db;
     private $uploadDir = 'uploads/avatars/'; // Thư mục lưu trữ avatar
+    private $jwtHandler;
 
     /**
      * Khởi tạo controller và kết nối database
@@ -17,6 +19,7 @@ class AccountController {
     public function __construct() {
         $this->db = (new Database())->getConnection();
         $this->accountModel = new AccountModel($this->db);
+        $this->jwtHandler = new JWTHandler();
         
         // Tạo thư mục upload nếu chưa tồn tại
         if (!file_exists($this->uploadDir)) {
@@ -204,6 +207,12 @@ class AccountController {
 
             // Kiểm tra tài khoản và mật khẩu
             if ($account && password_verify($password, $account->password)) {
+
+                // Tạo JWT token
+                $token = $this->jwtHandler->encode(['id' => $account->id, 'username' => $account->username]);
+
+                echo json_encode(['token' => $token]);
+
                 // Lưu thông tin vào session
                 session_start();
                 $_SESSION['username'] = $account->username;

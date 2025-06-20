@@ -3,6 +3,8 @@ require_once('app/config/database.php');
 require_once('app/models/ProductModel.php');
 require_once('app/models/CategoryModel.php');
 
+require_once('app/utils/JWTHandler.php');
+
 /**
  * Controller API cho quản lý sản phẩm
  * Hỗ trợ CRUD operations và upload hình ảnh thông qua API
@@ -11,6 +13,7 @@ class ProductApiController
 {
     private $productModel;
     private $db;
+    private $jwtHandler;
     
     // Thư mục lưu trữ hình ảnh upload
     private $uploadDir = 'uploads/products/';
@@ -25,6 +28,8 @@ class ProductApiController
     {
         $this->db = (new Database())->getConnection();
         $this->productModel = new ProductModel($this->db);
+
+        $this->jwtHandler = new JWTHandler();
         
         // Đặt header Content-Type cho API response
         header('Content-Type: application/json');
@@ -35,6 +40,37 @@ class ProductApiController
         // Xử lý CORS cho frontend JavaScript
         $this->handleCors();
     }
+
+    private function authenticate()
+    {
+        // Lấy tất cả các header từ request HTTP, bao gồm cả Authorization header
+        $headers = apache_request_headers();
+
+        // Kiểm tra nếu header Authorization tồn tại
+        if (isset($headers['Authorization'])) {
+            // Lấy giá trị của header Authorization (ví dụ: "Bearer abc.def.ghi")
+            $authHeader = $headers['Authorization'];
+
+            // Tách chuỗi theo dấu cách: phần đầu là 'Bearer', phần sau là chuỗi JWT
+            $arr = explode(" ", $authHeader);
+
+            // Lấy phần tử thứ 2 (tức là chuỗi JWT), nếu không có thì gán null
+            $jwt = $arr[1] ?? null;
+
+            // Nếu tồn tại chuỗi JWT
+            if ($jwt) {
+                // Giải mã JWT bằng phương thức decode của jwtHandler
+                $decoded = $this->jwtHandler->decode($jwt);
+
+                // Nếu giải mã thành công (tức là chuỗi JWT hợp lệ), trả về true
+                return $decoded ? true : false;
+            }
+        }
+
+        // Nếu không có Authorization header hoặc JWT không hợp lệ, trả về false
+        return false;
+    }
+
 
     /**
      * Tạo thư mục upload nếu chưa tồn tại
