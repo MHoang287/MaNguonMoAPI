@@ -199,6 +199,9 @@ class AccountController {
      */
     public function checkLogin() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            header('Content-Type: application/json');
+            $data = json_decode(file_get_contents("php://input"), true);
+
             $username = $_POST['username'] ?? '';
             $password = $_POST['password'] ?? '';
             
